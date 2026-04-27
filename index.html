@@ -1169,7 +1169,7 @@ function renderSmall() {
 
 }
 
-function evaluateSmall() {
+async function evaluateSmall() {
     let totalWeightedScore = 0;
     let maxPossibleScore = smallQuestions.length;
     let allAnswered = true;
@@ -1374,6 +1374,39 @@ function evaluateSmall() {
     resDiv.classList.remove('hidden');
     resDiv.scrollIntoView({ behavior: 'smooth' });
 
+    // --- NOVÁ ČÁST: GENEROVÁNÍ PDF A ODESLÁNÍ E-MAILU ---
+    
+    try {
+        // Získání jména z inputu (pokud existuje)
+        const nameInput = document.querySelector('input[placeholder*="jméno"]');
+        const userName = nameInput ? nameInput.value : "Uživatel";
+        const reportContentHtml = document.getElementById('pdf-source-data').innerHTML;
+
+        console.log("Připravuji PDF přílohu...");
+        const element = document.getElementById('pdf-source-data');
+        
+        // Vytvoření Base64 řetězce z PDF
+        const pdfBase64 = await html2pdf().from(element).outputPdf('base64');
+
+        console.log("Odesílám e-mail přes API...");
+        const response = await fetch('/api/send-report', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: userName,
+                reportHtml: `<h1>Security Report</h1><p>Dobrý den, v příloze zasíláme výsledek Vaší analýzy.</p>`,
+                pdfData: pdfBase64
+            })
+        });
+
+        if (response.ok) {
+            console.log("Report byl úspěšně odeslán na Váš e-mail.");
+        } else {
+            console.error("API vrátilo chybu při odesílání e-mailu.");
+        }
+    } catch (error) {
+        console.error("Chyba při procesu odesílání:", error);
+    }
 }
 
 
