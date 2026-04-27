@@ -1374,7 +1374,8 @@ async function evaluateSmall() {
     resDiv.classList.remove('hidden');
     resDiv.scrollIntoView({ behavior: 'smooth' });
 
-    // --- NOVÁ ČÁST: GENEROVÁNÍ PDF A ODESLÁNÍ E-MAILU ---
+    
+// --- NOVÁ ČÁST: GENEROVÁNÍ PDF A ODESLÁNÍ E-MAILU ---
     
     try {
         // Získání jména z inputu (pokud existuje)
@@ -1385,31 +1386,32 @@ async function evaluateSmall() {
         console.log("Připravuji PDF přílohu...");
         const element = document.getElementById('pdf-source-data');
         
-        // Vytvoření Base64 řetězce z PDF
-        const pdfBase64 = await html2pdf().from(element).outputPdf('base64');
+        const pdfFullBase64 = await html2pdf().from(element).outputPdf('base64');
+
+        // ODSTRANĚNÍ PREFIXU (klíčové pro Resend)
+        const cleanBase64 = pdfFullBase64.split(',')[1] || pdfFullBase64;
 
         console.log("Odesílám e-mail přes API...");
+        // TADY JE TA OPRAVA: přidáno "const response ="
         const response = await fetch('/api/send-report', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-    name: userName,
-    reportHtml: `<h1>Security Report</h1>`,
-    // Odstraníme případný prefix "data:application/pdf;base64,"
-    pdfData: pdfBase64.split(',')[1] || pdfBase64 
-})
+                name: userName,
+                reportHtml: `<h1>Security Report</h1><p>Dobrý den, v příloze zasíláme výsledek Vaší analýzy.</p>`,
+                pdfData: cleanBase64 
+            })
         });
 
         if (response.ok) {
             console.log("Report byl úspěšně odeslán na Váš e-mail.");
         } else {
-            console.error("API vrátilo chybu při odesílání e-mailu.");
+            const errorText = await response.text();
+            console.error("API vrátilo chybu:", errorText);
         }
     } catch (error) {
         console.error("Chyba při procesu odesílání:", error);
     }
-}
-
 
 function exportToPDF() {
 
