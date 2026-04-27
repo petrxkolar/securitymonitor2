@@ -1374,29 +1374,46 @@ async function evaluateSmall() {
     
     resDiv.classList.remove('hidden');
     resDiv.scrollIntoView({ behavior: 'smooth' });
-	
-	
-// --- ODESÍLÁNÍ E-MAILU ---
+
+    // --- ODESÍLÁNÍ E-MAILU S PDF PŘÍLOHOU ---
+
+    // Definice chybějících proměnných pro API
     const userNameInput = document.querySelector('input[name="name"]');
     const userName = userNameInput ? userNameInput.value : "Uživatel";
     const reportHtmlForEmail = document.getElementById('pdf-source-data').innerHTML;
 
     try {
+        console.log("Generuji PDF a odesílám report...");
+        
+        // 1. Vygenerování PDF jako Base64 řetězec
         const element = document.getElementById('pdf-source-data');
         const pdfBase64 = await html2pdf().from(element).outputPdf('base64');
 
-        await fetch('/api/send-report', {
+        // 2. Odeslání do API (Resend)
+        const response = await fetch('/api/send-report', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 name: userName,
-                reportHtml: `<div style="font-family:sans-serif;">${reportHtmlForEmail}</div>`,
+                reportHtml: `
+                    <div style="font-family: sans-serif; max-width: 800px;">
+                        <h1 style="color: #4f46e5;">Bezpečnostní report pro: ${userName}</h1>
+                        <p>Děkujeme za využití našeho nástroje. V příloze naleznete svůj kompletní PDF report.</p>
+                        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
+                        ${reportHtmlForEmail}
+                    </div>`,
                 pdfData: pdfBase64 
             })
         });
-        console.log('Report úspěšně odeslán.');
+
+        if (response.ok) {
+            console.log('E-mail s PDF byl úspěšně odeslán.');
+        } else {
+            const errData = await response.json();
+            console.error('Chyba při odesílání:', errData.error);
+        }
     } catch (err) {
-        console.error('Chyba odesílání:', err);
+        console.error('Chyba při komunikaci s API nebo generování PDF:', err);
     }
 }
 
