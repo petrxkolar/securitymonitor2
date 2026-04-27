@@ -1,29 +1,16 @@
-const sgMail = require('@sendgrid/mail');
-
-// Pro začátek můžete vložit klíč přímo (nedoporučuje se), 
-// nebo použít Vercel Environment Variables (doporučeno).
-sgMail.setApiKey('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');
+import { Resend } from 'resend';
+const resend = new Resend('re_d5Z16HGb_YzRvEVqy1byo5QHyQ2kEv1xL');
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Pouze POST požadavky jsou povoleny.' });
-  }
-
-  const { email, reportHtml, name } = req.body;
-
-  const msg = {
-    to: 'petrxkolar@seznam.cz', // Cílový e-mail
-    from: 'petrxkolar@seznam.cz', // Musí být ověřený v SendGridu
-    subject: `Security Monitor Report - ${name}`,
-    text: 'Výsledky vaší bezpečnostní analýzy.',
-    html: reportHtml,
-  };
-
   try {
-    await sgMail.send(msg);
-    res.status(200).json({ success: true });
+    const data = await resend.emails.send({
+      from: 'onboarding@resend.dev', // Pro testy, později vaše doména
+      to: 'petrxkolar@seznam.cz',
+      subject: 'Security Report',
+      html: req.body.reportHtml,
+    });
+    res.status(200).json(data);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Chyba při odesílání e-mailu.' });
+    res.status(500).json({ error });
   }
 }
