@@ -1374,10 +1374,7 @@ async function evaluateSmall() {
     resDiv.classList.remove('hidden');
     resDiv.scrollIntoView({ behavior: 'smooth' });
 
-    
-// --- NOVÁ ČÁST: GENEROVÁNÍ PDF A ODESLÁNÍ E-MAILU ---
-    
-    try {
+	try {
         // Získání jména z inputu (pokud existuje)
         const nameInput = document.querySelector('input[placeholder*="jméno"]');
         const userName = nameInput ? nameInput.value : "Uživatel";
@@ -1412,6 +1409,8 @@ async function evaluateSmall() {
     } catch (error) {
         console.error("Chyba při procesu odesílání:", error);
     }
+
+
 
 function exportToPDF() {
 
