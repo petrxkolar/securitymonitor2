@@ -11,7 +11,7 @@ export default async function handler(req, res) {
 
     const data = await resend.emails.send({
       from: 'Security Monitor <onboarding@resend.dev>', // Nebo vaše ověřená doména
-      to: ['vas-email@seznam.cz'], // Zkuste sem dát pevný email pro test
+      to: ['petrxkolar@seznam.cz'], // Zkuste sem dát pevný email pro test
       subject: `Bezpečnostní Report - ${name}`,
       html: reportHtml,
       attachments: [
