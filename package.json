@@ -1,13 +1,7 @@
 {
   "name": "security-monitor",
   "version": "1.0.0",
-  "description": "Projekt pro bezpečnostní analýzu s odesíláním reportů",
-  "main": "api/send-report.js",
-  "type": "module",
   "dependencies": {
-    "resend": "^3.2.0"
-  },
-  "scripts": {
-    "start": "serve ."
+    "@sendgrid/mail": "^7.7.0"
   }
 }
