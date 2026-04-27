@@ -1,27 +1,31 @@
+// api/send-report.js
 import { Resend } from 'resend';
+
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).send('Method not allowed');
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { reportHtml, name, pdfData } = req.body;
+    const { name, reportHtml, pdfData } = req.body;
 
     const data = await resend.emails.send({
-      from: 'onboarding@resend.dev',
-      to: 'petrxkolar@seznam.cz',
-      subject: `Security Report - ${name}`,
+      from: 'Security Monitor <onboarding@resend.dev>', // Nebo vaše ověřená doména
+      to: ['vas-email@seznam.cz'], // Zkuste sem dát pevný email pro test
+      subject: `Bezpečnostní Report - ${name}`,
       html: reportHtml,
       attachments: [
         {
-          filename: `Report_${name}.pdf`,
-          content: pdfData, // Toto je ten Base64 řetězec z prohlížeče
+          filename: 'report.pdf',
+          content: pdfData, // Resend očekává Base64 řetězec, který posíláme
         },
       ],
     });
 
-    res.status(200).json(data);
+    return res.status(200).json(data);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    // Tady je kritické logovat chybu na serveru
+    console.error("Resend Error:", error);
+    return res.status(500).json({ error: error.message });
   }
 }
