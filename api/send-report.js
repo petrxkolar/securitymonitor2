@@ -1,25 +1,29 @@
-// api/send-report.js
-import { Resend } from 'resend';
+const sgMail = require('@sendgrid/mail');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Pro začátek můžete vložit klíč přímo (nedoporučuje se), 
+// nebo použít Vercel Environment Variables (doporučeno).
+sgMail.setApiKey('ZDE_BUDE_VAS_SENDGRID_API_KEY');
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Metoda nepovolena' });
+    return res.status(405).json({ error: 'Pouze POST požadavky jsou povoleny.' });
   }
 
-  const { email, name, score, reportHtml } = JSON.parse(req.body);
+  const { email, reportHtml, name } = req.body;
+
+  const msg = {
+    to: 'petrxkolar@seznam.cz', // Cílový e-mail
+    from: 'overeny-email@vasedomena.cz', // Musí být ověřený v SendGridu
+    subject: `Security Monitor Report - ${name}`,
+    text: 'Výsledky vaší bezpečnostní analýzy.',
+    html: reportHtml,
+  };
 
   try {
-    const data = await resend.emails.send({
-      from: 'Security Monitor <onboarding@resend.dev>', // Později nahradíte svou doménou
-      to: [email],
-      subject: `Váš bezpečnostní report - Skóre: ${score}%`,
-      html: `<h1>Ahoj ${name},</h1><p>zde jsou výsledky vaší analýzy:</p>${reportHtml}`,
-    });
-
-    res.status(200).json(data);
+    await sgMail.send(msg);
+    res.status(200).json({ success: true });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error(error);
+    res.status(500).json({ error: 'Chyba při odesílání e-mailu.' });
   }
 }
