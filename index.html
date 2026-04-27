@@ -1169,7 +1169,7 @@ function renderSmall() {
 
 }
 
-function evaluateSmall() {
+async function evaluateSmall() {
     let totalWeightedScore = 0;
     let maxPossibleScore = smallQuestions.length;
     let allAnswered = true;
@@ -1203,14 +1203,6 @@ function evaluateSmall() {
         alert("Prosím odpovězte na všechny otázky před vyhodnocením."); 
         return; 
     }
-
-// --- NOVÁ ČÁST: Sběr kontaktních údajů pro e-mail ---
-    // Předpokládám, že v HTML máte inputy s těmito ID nebo jmény
-    const userEmail = document.querySelector('input[name="email"]')?.value || 
-                     document.querySelector('input[type="email"]')?.value;
-    const userName = document.querySelector('input[name="name"]')?.value || "Uživatel";
-
-
 
     // 2. SEŘAZENÍ: Nejdříve špatné odpovědi (váha 0, pak 0.1, pak 0.5, nakonec 1)
     resultsArray.sort((a, b) => a.weight - b.weight);
@@ -1374,42 +1366,48 @@ function evaluateSmall() {
             </a>
         </div>
     `;
-// --- ODESLÁNÍ NA VERCEL API ---
-    if (userEmail) {
-        sendEmailReport(userEmail, userName, percent, finalReportHTML);
-    }
+
     // ZOBRAZENÍ odkaz TLAČÍTEK 
     document.getElementById('download-rules-pdf').classList.remove('hidden');
     document.getElementById('download-e-book-pdf').classList.remove('hidden'); 
     
     resDiv.classList.remove('hidden');
     resDiv.scrollIntoView({ behavior: 'smooth' });
+	
+	
+	// Příprava dat pro e-mail
+    const reportHtmlForEmail = document.getElementById('pdf-source-data').innerHTML;
+    const userNameInput = document.querySelector('input[name="name"]');
+    const userName = userNameInput ? userNameInput.value : "Uživatel";
 
-}
-
-// Pomocná funkce pro samotný fetch na Vercel
-async function sendEmailReport(email, name, score, htmlContent) {
     try {
+        console.log("Odesílám report na e-mail...");
         const response = await fetch('/api/send-report', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                email: email,
-                name: name,
-                score: score,
-                reportHtml: htmlContent
-            }),
+                name: userName,
+                reportHtml: `
+                    <div style="font-family: sans-serif; max-width: 800px; margin: auto;">
+                        <h1 style="color: #4f46e5;">Bezpečnostní report pro: ${userName}</h1>
+                        <p>Děkujeme za využití našeho nástroje. Níže naleznete výsledky analýzy:</p>
+                        <hr />
+                        ${reportHtmlForEmail}
+                    </div>`
+            })
         });
-        
-        if (!response.ok) {
-            console.error('Chyba při odesílání e-mailu');
+
+        if (response.ok) {
+            console.log('E-mail úspěšně odeslán.');
+            // Volitelně: alert('Report byl odeslán na váš e-mail.');
+        } else {
+            const errorData = await response.json();
+            console.error('Chyba serveru:', errorData.error);
         }
     } catch (err) {
-        console.error('Síťová chyba:', err);
+        console.error('Chyba při komunikaci s API:', err);
     }
-}
-
-
+} // <--- Teprve tady funkce končí
 
 
 function exportToPDF() {
