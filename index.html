@@ -1393,10 +1393,11 @@ async function evaluateSmall() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                name: userName,
-                reportHtml: `<h1>Security Report</h1><p>Dobrý den, v příloze zasíláme výsledek Vaší analýzy.</p>`,
-                pdfData: pdfBase64
-            })
+    name: userName,
+    reportHtml: `<h1>Security Report</h1>`,
+    // Odstraníme případný prefix "data:application/pdf;base64,"
+    pdfData: pdfBase64.split(',')[1] || pdfBase64 
+})
         });
 
         if (response.ok) {
