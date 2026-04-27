@@ -1375,38 +1375,19 @@ async function evaluateSmall() {
     resDiv.scrollIntoView({ behavior: 'smooth' });
 	
 	
-	// Příprava dat pro e-mail
-    const reportHtmlForEmail = document.getElementById('pdf-source-data').innerHTML;
-    const userNameInput = document.querySelector('input[name="name"]');
-    const userName = userNameInput ? userNameInput.value : "Uživatel";
+// 1. Vygenerování PDF jako Base64 řetězec v prohlížeči
+const element = document.getElementById('pdf-source-data');
+const pdfBase64 = await html2pdf().from(element).outputPdf('base64');
 
-    try {
-        console.log("Odesílám report na e-mail...");
-        const response = await fetch('/api/send-report', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                name: userName,
-                reportHtml: `
-                    <div style="font-family: sans-serif; max-width: 800px; margin: auto;">
-                        <h1 style="color: #4f46e5;">Bezpečnostní report pro: ${userName}</h1>
-                        <p>Děkujeme za využití našeho nástroje. Níže naleznete výsledky analýzy:</p>
-                        <hr />
-                        ${reportHtmlForEmail}
-                    </div>`
-            })
-        });
-
-        if (response.ok) {
-            console.log('E-mail úspěšně odeslán.');
-            // Volitelně: alert('Report byl odeslán na váš e-mail.');
-        } else {
-            const errorData = await response.json();
-            console.error('Chyba serveru:', errorData.error);
-        }
-    } catch (err) {
-        console.error('Chyba při komunikaci s API:', err);
-    }
+// 2. Odeslání do API
+const response = await fetch('/api/send-report', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+        name: userName,
+        reportHtml: reportHtmlForEmail,
+        pdfData: pdfBase64 // Přidáváme data přílohy
+    });
 } // <--- Teprve tady funkce končí
 
 
