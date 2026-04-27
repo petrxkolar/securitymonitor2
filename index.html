@@ -1374,28 +1374,39 @@ async function evaluateSmall() {
     resDiv.classList.remove('hidden');
     resDiv.scrollIntoView({ behavior: 'smooth' });
 
-	try {
-        // Získání jména z inputu (pokud existuje)
+try {
         const nameInput = document.querySelector('input[placeholder*="jméno"]');
         const userName = nameInput ? nameInput.value : "Uživatel";
-        const reportContentHtml = document.getElementById('pdf-source-data').innerHTML;
+        const element = document.getElementById('pdf-source-data');
 
         console.log("Připravuji PDF přílohu...");
-        const element = document.getElementById('pdf-source-data');
-        
-        const pdfFullBase64 = await html2pdf().from(element).outputPdf('base64');
 
-        // ODSTRANĚNÍ PREFIXU (klíčové pro Resend)
-        const cleanBase64 = pdfFullBase64.split(',')[1] || pdfFullBase64;
+        // Spolehlivější konfigurace pro html2pdf
+        const opt = {
+            margin: 10,
+            filename: 'report.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        // Generování PDF jako Data URL string
+        const pdfDataUri = await html2pdf().set(opt).from(element).output('datauristring');
+
+        if (!pdfDataUri) {
+            throw new Error("Nepodařilo se vygenerovat PDF data.");
+        }
+
+        // Vyčištění Base64 (odstranění "data:application/pdf;filename=generated.pdf;base64,")
+        const cleanBase64 = pdfDataUri.split('base64,')[1];
 
         console.log("Odesílám e-mail přes API...");
-        // TADY JE TA OPRAVA: přidáno "const response ="
         const response = await fetch('/api/send-report', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 name: userName,
-                reportHtml: `<h1>Security Report</h1><p>Dobrý den, v příloze zasíláme výsledek Vaší analýzy.</p>`,
+                reportHtml: `<h1>Security Report</h1><p>Dobrý den, v příloze zasíláme výsledek Vaší analýzy pro uživatele: ${userName}.</p>`,
                 pdfData: cleanBase64 
             })
         });
@@ -1403,14 +1414,14 @@ async function evaluateSmall() {
         if (response.ok) {
             console.log("Report byl úspěšně odeslán na Váš e-mail.");
         } else {
-            const errorText = await response.text();
-            console.error("API vrátilo chybu:", errorText);
+            const errorDetail = await response.text();
+            console.error("API vrátilo chybu:", errorDetail);
         }
-    } catch (error) {
-        console.error("Chyba při procesu odesílání:", error);
-    }
 
-}
+    } catch (error) {
+        console.error("Chyba při procesu odesílání:", error.message);
+    }
+} // Konec funkce evaluateSmall
 
 function exportToPDF() {
 
