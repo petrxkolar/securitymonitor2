@@ -12,7 +12,7 @@ export default async function handler(req, res) {
   const { email, reportHtml, name } = req.body;
 
   const msg = {
-    to: 'petrxkolar@seznam.cz', // Cílový e-mail
+    to: 'petrxkolar@gmail.com', // Cílový e-mail
     from: 'petrxkolar@seznam.cz', // Musí být ověřený v SendGridu
     subject: `Security Monitor Report - ${name}`,
     text: 'Výsledky vaší bezpečnostní analýzy.',
