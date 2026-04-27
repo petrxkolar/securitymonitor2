@@ -1374,31 +1374,39 @@ async function evaluateSmall() {
     resDiv.classList.remove('hidden');
     resDiv.scrollIntoView({ behavior: 'smooth' });
 
-try {
+// --- NOVÁ ČÁST: GENEROVÁNÍ PDF A ODESLÁNÍ E-MAILU ---
+    try {
         const nameInput = document.querySelector('input[placeholder*="jméno"]');
         const userName = nameInput ? nameInput.value : "Uživatel";
         const element = document.getElementById('pdf-source-data');
 
-        console.log("Připravuji PDF přílohu...");
+        console.log("Spouštím generování PDF...");
 
-        // Spolehlivější konfigurace pro html2pdf
-        const opt = {
+        // Použijeme Worker API pro větší stabilitu
+        const worker = html2pdf().from(element).set({
             margin: 10,
             filename: 'report.pdf',
-            image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { scale: 2, useCORS: true },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        };
+        });
 
-        // Generování PDF jako Data URL string
-        const pdfDataUri = await html2pdf().set(opt).from(element).output('datauristring');
+        // Počkáme na vygenerování jako base64 string
+        const pdfDataUri = await worker.output('datauristring');
 
         if (!pdfDataUri) {
-            throw new Error("Nepodařilo se vygenerovat PDF data.");
+            console.error("Knihovna html2pdf vrátila prázdný výsledek.");
+            return;
         }
 
-        // Vyčištění Base64 (odstranění "data:application/pdf;filename=generated.pdf;base64,")
-        const cleanBase64 = pdfDataUri.split('base64,')[1];
+        console.log("PDF vygenerováno, čistím data...");
+        
+        // Bezpečné rozdělení řetězce
+        const parts = pdfDataUri.split('base64,');
+        if (parts.length < 2) {
+            console.error("Neočekávaný formát PDF dat:", pdfDataUri.substring(0, 50));
+            return;
+        }
+        const cleanBase64 = parts[1];
 
         console.log("Odesílám e-mail přes API...");
         const response = await fetch('/api/send-report', {
@@ -1406,7 +1414,7 @@ try {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 name: userName,
-                reportHtml: `<h1>Security Report</h1><p>Dobrý den, v příloze zasíláme výsledek Vaší analýzy pro uživatele: ${userName}.</p>`,
+                reportHtml: `<h1>Security Report</h1><p>Dobrý den, v příloze zasíláme výsledek analýzy pro: ${userName}.</p>`,
                 pdfData: cleanBase64 
             })
         });
@@ -1414,12 +1422,12 @@ try {
         if (response.ok) {
             console.log("Report byl úspěšně odeslán na Váš e-mail.");
         } else {
-            const errorDetail = await response.text();
-            console.error("API vrátilo chybu:", errorDetail);
+            const errorText = await response.text();
+            console.error("API vrátilo chybu:", errorText);
         }
 
     } catch (error) {
-        console.error("Chyba při procesu odesílání:", error.message);
+        console.error("Kritická chyba při procesu odesílání:", error);
     }
 } // Konec funkce evaluateSmall
 
