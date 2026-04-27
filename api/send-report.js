@@ -2,7 +2,7 @@ const sgMail = require('@sendgrid/mail');
 
 // Pro začátek můžete vložit klíč přímo (nedoporučuje se), 
 // nebo použít Vercel Environment Variables (doporučeno).
-sgMail.setApiKey('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');
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
