@@ -1375,57 +1375,68 @@ async function evaluateSmall() {
     resDiv.scrollIntoView({ behavior: 'smooth' });
 
 // --- NOVÁ ČÁST: GENEROVÁNÍ PDF A ODESLÁNÍ E-MAILU ---
- try {
-    // 1. Získání údajů z formuláře
-    const nameInput = document.querySelector('input[placeholder*="jméno"]');
-    const emailInput = document.querySelector('input[type="email"]') || document.querySelector('input[placeholder*="mail"]');
-    
-    const userName = nameInput ? nameInput.value : "Uživatel";
-    const userEmail = emailInput ? emailInput.value : null; // Získání e-mailu
+    try {
+        const nameInput = document.querySelector('input[placeholder*="jméno"]');
+        const userName = nameInput ? nameInput.value : "Uživatel";
+        const element = document.getElementById('pdf-source-data');
 
-    if (!userEmail) {
-        console.error("E-mail nebyl nalezen, report nelze odeslat.");
-        return;
+        console.log("Spouštím generování PDF...");
+
+        // Použijeme Worker API pro větší stabilitu
+       // 1. Upravené nastavení pro zmenšení velikosti PDF
+        const worker = html2pdf().from(element).set({
+            margin: 10,
+            filename: 'report.pdf',
+            image: { type: 'jpeg', quality: 0.7 }, // Snížená kvalita z 0.98 na 0.7
+            html2canvas: { 
+                scale: 1, // Snížení měřítka z 2 na 1 (výrazně zmenší velikost dat)
+                useCORS: true,
+                logging: false 
+            },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        });
+
+        console.log("Generuji komprimované PDF...");
+
+        // Počkáme na vygenerování jako base64 string
+        const pdfDataUri = await worker.output('datauristring');
+
+        if (!pdfDataUri) {
+            console.error("Knihovna html2pdf vrátila prázdný výsledek.");
+            return;
+        }
+
+        console.log("PDF vygenerováno, čistím data...");
+        
+        // Bezpečné rozdělení řetězce
+        const parts = pdfDataUri.split('base64,');
+        if (parts.length < 2) {
+            console.error("Neočekávaný formát PDF dat:", pdfDataUri.substring(0, 50));
+            return;
+        }
+        const cleanBase64 = parts[1];
+
+        console.log("Odesílám e-mail přes API...");
+        const response = await fetch('/api/send-report', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: userName,
+                reportHtml: `<h1>Security Report</h1><p>Dobrý den, v příloze zasíláme výsledek analýzy pro: ${userName}.</p>`,
+                pdfData: cleanBase64 
+            })
+        });
+
+        if (response.ok) {
+            console.log("Report byl úspěšně odeslán na Váš e-mail.");
+        } else {
+            const errorText = await response.text();
+            console.error("API vrátilo chybu:", errorText);
+        }
+
+    } catch (error) {
+        console.error("Kritická chyba při procesu odesílání:", error);
     }
-
-    const element = document.getElementById('pdf-source-data');
-    console.log("Spouštím generování PDF...");
-
-    const worker = html2pdf().from(element).set({
-        margin: 10,
-        filename: 'security-report.pdf',
-        image: { type: 'jpeg', quality: 0.7 },
-        html2canvas: { scale: 1, useCORS: true, logging: false },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    });
-
-    const pdfDataUri = await worker.output('datauristring');
-    const cleanBase64 = pdfDataUri.split('base64,')[1];
-
-    console.log(`Odesílám report na adresu: ${userEmail}`);
-
-    // 2. Odeslání na vaše API
-    const response = await fetch('/api/send-report', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            name: userName,
-            email: userEmail, // PŘIDÁNO: posíláme e-mail klienta
-            reportHtml: `<h1>Security Report</h1><p>Dobrý den, v příloze zasíláme výsledek analýzy pro: ${userName}.</p>`,
-            pdfData: cleanBase64 
-        })
-    });
-
-    if (response.ok) {
-        console.log("Report byl úspěšně odeslán uživateli.");
-    } else {
-        const errorText = await response.text();
-        console.error("API vrátilo chybu:", errorText);
-    }
-
-} catch (error) {
-    console.error("Kritická chyba při procesu odesílání:", error);
-}
 } // Konec funkce evaluateSmall
 
 function exportToPDF() {
