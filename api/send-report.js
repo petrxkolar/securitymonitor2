@@ -8,7 +8,8 @@ export default async function handler(req, res) {
   try {
     const data = await resend.emails.send({
       from: 'Bezpečnostní Analýza <analyza@vasedomena.cz>', // Musí být vaše ověřená doména
-      to: [email], // Dynamický e-mail klienta z frontendu
+       to: <petrxkolar@seznam.cz>,
+      //to: [email], // Dynamický e-mail klienta z frontendu
       subject: `Security Report - ${name}`,
       html: `<p>Dobrý den, v příloze naleznete svůj report.</p>`,
       attachments: [
