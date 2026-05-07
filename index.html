@@ -1375,70 +1375,91 @@ async function evaluateSmall() {
     resDiv.scrollIntoView({ behavior: 'smooth' });
 
 // --- NOVÁ ČÁST: GENEROVÁNÍ PDF A ODESLÁNÍ E-MAILU ---
- // --- NOVÁ ČÁST: GENEROVÁNÍ PDF A ODESLÁNÍ E-MAILU ---
 try {
     const nameInput = document.querySelector('input[placeholder*="jméno"]');
     const userName = nameInput ? nameInput.value : "Uživatel";
     const element = document.getElementById('pdf-source-data');
 
-    console.log("Spouštím generování PDF pro e-mail...");
+    if (!element) {
+        console.error("Element #pdf-source-data nebyl nalezen!");
+        return;
+    }
 
-    // 1. KLONOVÁNÍ ELEMENTU (Tímto se zbavíme prázdných stran na začátku)
-    // Vytvoříme kopii reportu mimo hlavní dokument, aby ho neovlivňovalo okolní CSS
+    console.log("Připravuji data pro PDF...");
+
+    // 1. KLONOVÁNÍ
     const clone = element.cloneNode(true);
-    clone.style.width = "800px"; // Fixní šířka pro konzistentní renderování
-    clone.style.padding = "20px";
-    clone.style.background = "white";
+    
+    // Nastavení stylů pro klon
+    Object.assign(clone.style, {
+        position: "absolute",
+        left: "-9999px",
+        top: "0",
+        width: "800px",
+        display: "block",
+        background: "white",
+        visibility: "visible",
+        opacity: "1"
+    });
+    
+    document.body.appendChild(clone);
 
-    // 2. NASTAVENÍ (Identické s funkčním stažením, jen bez ukládání na disk)
+    // --- KLÍČOVÁ ZMĚNA: ČEKÁNÍ NA VYKRESLENÍ ---
+    // Počkáme 500ms, aby měl prohlížeč čas zpracovat CSS a Tailwind třídy v klonu
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    console.log("Generuji PDF string...");
+
+    // 2. NASTAVENÍ
     const opt = {
         margin: 10,
         filename: 'report.pdf',
-        image: { type: 'jpeg', quality: 0.95 }, // Vyšší kvalita
+        image: { type: 'jpeg', quality: 0.9 },
         html2canvas: { 
-            scale: 2,           // Vracíme na 2 pro správné formátování
-            useCORS: true, 
+            scale: 2, 
+            useCORS: true,
             logging: false,
-            letterRendering: true
+            letterRendering: true,
+            scrollY: 0
         },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
         pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
     };
 
     // 3. GENERUJEME DATA
-    // Použijeme worker, ale místo .save() použijeme .output
+    // Použijeme .from(clone) - nyní už je klon vykreslený v DOMu
     const pdfDataUri = await html2pdf().set(opt).from(clone).output('datauristring');
 
-    if (!pdfDataUri) {
-        console.error("Knihovna html2pdf vrátila prázdný výsledek.");
-        return;
+    // Odstranění klonu
+    document.body.removeChild(clone);
+
+    if (!pdfDataUri || pdfDataUri.length < 2000) { // Zvýšený limit pro kontrolu
+        throw new Error("PDF se nepodařilo správně vygenerovat (soubor je příliš malý).");
     }
 
-    // Vyčištění base64 pro API
     const cleanBase64 = pdfDataUri.split('base64,')[1];
 
-    console.log("Odesílám e-mail přes API (Resend)...");
+    console.log("Odesílám e-mail...");
     const response = await fetch('/api/send-report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             name: userName,
-            reportHtml: `<h1>Security Report</h1><p>Dobrý den, v příloze zasíláme výsledek analýzy pro uživatele: ${userName}.</p>`,
+            reportHtml: `<h1>Security Report</h1><p>Dobrý den, v příloze zasíláme výsledek analýzy pro: ${userName}.</p>`,
             pdfData: cleanBase64 
         })
     });
 
     if (response.ok) {
-        console.log("Report byl úspěšně odeslán.");
-        alert("Report byl odeslán na Váš e-mail.");
+        alert("Report byl úspěšně odeslán na Váš e-mail.");
     } else {
         const errorText = await response.text();
-        console.error("API vrátilo chybu:", errorText);
-        alert("Chyba při odesílání: " + errorText);
+        alert("Server vrátil chybu: " + errorText);
     }
 
 } catch (error) {
-    console.error("Kritická chyba při procesu odesílání:", error);
+    console.error("Kritická chyba:", error);
+    alert("Chyba: " + error.message);
 }
 } // Konec funkce evaluateSmall
 
