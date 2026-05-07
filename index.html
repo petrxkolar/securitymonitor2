@@ -1387,7 +1387,7 @@ async function evaluateSmall() {
         const worker = html2pdf().from(element).set({
             margin: 10,
             filename: 'report.pdf',
-            image: { type: 'jpeg', quality: 0.98 }, // Snížená kvalita z 0.98 na 0.7
+            image: { type: 'jpeg', quality: 0.7 }, // Snížená kvalita z 0.98 na 0.7
             html2canvas: { 
                 scale: 1, // Snížení měřítka z 2 na 1 (výrazně zmenší velikost dat)
                 useCORS: true,
