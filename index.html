@@ -46,34 +46,53 @@
 	<style>
 
 @media print {
-    /* Skryjeme vše a odstraníme z toku stránky */
+
     body * {
-        display: none !important;
+
+        visibility: hidden;
+
+        height: 0;
+
+        margin: 0;
+
+        padding: 0;
+
     }
 
-    /* Zobrazíme pouze report a jeho rodičovské kontejnery */
-    #pdf-source-data, 
-    #pdf-source-data *,
-    .view.active, /* Pokud je report uvnitř aktivního pohledu */
-    main { 
-        display: block !important;
-        visibility: visible !important;
+    #pdf-source-data, #pdf-source-data * {
+
+        visibility: visible;
+
+        height: auto;
+
     }
 
     #pdf-source-data {
-        position: absolute; /* Zkuste se vrátit k absolute, ale s top: 0 */
-        top: 0;
+
+        position: absolute;
+
         left: 0;
+
+        top: 0;
+
         width: 100%;
-        margin: 0;
-        padding: 0;
+
+        display: block !important;
+
     }
 
-    /* Vynucení konce stránky v CSS, pokud je potřeba */
-    .page-break {
-        page-break-before: always;
-        break-before: page;
+    .no-print {
+
+        display: none !important;
+
     }
+
+	.print-block {
+
+        display: block !important;
+
+    }
+
 }
 
 
@@ -1360,32 +1379,17 @@ async function evaluateSmall() {
         const nameInput = document.querySelector('input[placeholder*="jméno"]');
         const userName = nameInput ? nameInput.value : "Uživatel";
         const element = document.getElementById('pdf-source-data');
-		console.log("Spouštím generování PDF...");
-		const opt = {
-    margin: [10, 10], // Horní/dolní a levý/pravý okraj v mm
-    filename: 'security-report.pdf',
-    image: { type: 'jpeg', quality: 0.75 }, // Dobrý poměr kvalita/velikost
-    html2canvas: { 
-        scale: 2, // Doporučuji nechat 2 pro čitelnost textu
-        useCORS: true,
-        logging: false,
-        letterRendering: true
-    },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-    // Zabrání rozbití elementů mezi stránkami
-    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } 
-};
 
-        
+        console.log("Spouštím generování PDF...");
 
         // Použijeme Worker API pro větší stabilitu
        // 1. Upravené nastavení pro zmenšení velikosti PDF
         const worker = html2pdf().from(element).set({
             margin: 10,
             filename: 'report.pdf',
-            image: { type: 'jpeg', quality: 0.98 }, // Snížená kvalita z 0.98 na 0.7
+            image: { type: 'jpeg', quality: 0.7 }, // Snížená kvalita z 0.98 na 0.7
             html2canvas: { 
-                scale: 2, // Snížení měřítka z 2 na 1 (výrazně zmenší velikost dat)
+                scale: 1, // Snížení měřítka z 2 na 1 (výrazně zmenší velikost dat)
                 useCORS: true,
                 logging: false 
             },
