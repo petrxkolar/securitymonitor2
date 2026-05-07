@@ -1375,68 +1375,71 @@ async function evaluateSmall() {
     resDiv.scrollIntoView({ behavior: 'smooth' });
 
 // --- NOVÁ ČÁST: GENEROVÁNÍ PDF A ODESLÁNÍ E-MAILU ---
-    try {
-        const nameInput = document.querySelector('input[placeholder*="jméno"]');
-        const userName = nameInput ? nameInput.value : "Uživatel";
-        const element = document.getElementById('pdf-source-data');
+ // --- NOVÁ ČÁST: GENEROVÁNÍ PDF A ODESLÁNÍ E-MAILU ---
+try {
+    const nameInput = document.querySelector('input[placeholder*="jméno"]');
+    const userName = nameInput ? nameInput.value : "Uživatel";
+    const element = document.getElementById('pdf-source-data');
 
-        console.log("Spouštím generování PDF...");
+    console.log("Spouštím generování PDF pro e-mail...");
 
-        // Použijeme Worker API pro větší stabilitu
-       // 1. Upravené nastavení pro zmenšení velikosti PDF
-        const worker = html2pdf().from(element).set({
-            margin: 10,
-            filename: 'report.pdf',
-            image: { type: 'jpeg', quality: 0.7 }, // Snížená kvalita z 0.98 na 0.7
-            html2canvas: { 
-                scale: 1, // Snížení měřítka z 2 na 1 (výrazně zmenší velikost dat)
-                useCORS: true,
-                logging: false 
-            },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        });
+    // 1. KLONOVÁNÍ ELEMENTU (Tímto se zbavíme prázdných stran na začátku)
+    // Vytvoříme kopii reportu mimo hlavní dokument, aby ho neovlivňovalo okolní CSS
+    const clone = element.cloneNode(true);
+    clone.style.width = "800px"; // Fixní šířka pro konzistentní renderování
+    clone.style.padding = "20px";
+    clone.style.background = "white";
 
-        console.log("Generuji komprimované PDF...");
+    // 2. NASTAVENÍ (Identické s funkčním stažením, jen bez ukládání na disk)
+    const opt = {
+        margin: 10,
+        filename: 'report.pdf',
+        image: { type: 'jpeg', quality: 0.95 }, // Vyšší kvalita
+        html2canvas: { 
+            scale: 2,           // Vracíme na 2 pro správné formátování
+            useCORS: true, 
+            logging: false,
+            letterRendering: true
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+    };
 
-        // Počkáme na vygenerování jako base64 string
-        const pdfDataUri = await worker.output('datauristring');
+    // 3. GENERUJEME DATA
+    // Použijeme worker, ale místo .save() použijeme .output
+    const pdfDataUri = await html2pdf().set(opt).from(clone).output('datauristring');
 
-        if (!pdfDataUri) {
-            console.error("Knihovna html2pdf vrátila prázdný výsledek.");
-            return;
-        }
-
-        console.log("PDF vygenerováno, čistím data...");
-        
-        // Bezpečné rozdělení řetězce
-        const parts = pdfDataUri.split('base64,');
-        if (parts.length < 2) {
-            console.error("Neočekávaný formát PDF dat:", pdfDataUri.substring(0, 50));
-            return;
-        }
-        const cleanBase64 = parts[1];
-
-        console.log("Odesílám e-mail přes API...");
-        const response = await fetch('/api/send-report', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                name: userName,
-                reportHtml: `<h1>Security Report</h1><p>Dobrý den, v příloze zasíláme výsledek analýzy pro: ${userName}.</p>`,
-                pdfData: cleanBase64 
-            })
-        });
-
-        if (response.ok) {
-            console.log("Report byl úspěšně odeslán na Váš e-mail.");
-        } else {
-            const errorText = await response.text();
-            console.error("API vrátilo chybu:", errorText);
-        }
-
-    } catch (error) {
-        console.error("Kritická chyba při procesu odesílání:", error);
+    if (!pdfDataUri) {
+        console.error("Knihovna html2pdf vrátila prázdný výsledek.");
+        return;
     }
+
+    // Vyčištění base64 pro API
+    const cleanBase64 = pdfDataUri.split('base64,')[1];
+
+    console.log("Odesílám e-mail přes API (Resend)...");
+    const response = await fetch('/api/send-report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            name: userName,
+            reportHtml: `<h1>Security Report</h1><p>Dobrý den, v příloze zasíláme výsledek analýzy pro uživatele: ${userName}.</p>`,
+            pdfData: cleanBase64 
+        })
+    });
+
+    if (response.ok) {
+        console.log("Report byl úspěšně odeslán.");
+        alert("Report byl odeslán na Váš e-mail.");
+    } else {
+        const errorText = await response.text();
+        console.error("API vrátilo chybu:", errorText);
+        alert("Chyba při odesílání: " + errorText);
+    }
+
+} catch (error) {
+    console.error("Kritická chyba při procesu odesílání:", error);
+}
 } // Konec funkce evaluateSmall
 
 function exportToPDF() {
