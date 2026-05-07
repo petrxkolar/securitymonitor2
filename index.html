@@ -1406,7 +1406,7 @@ try {
 
     // --- KLÍČOVÁ ZMĚNA: ČEKÁNÍ NA VYKRESLENÍ ---
     // Počkáme 500ms, aby měl prohlížeč čas zpracovat CSS a Tailwind třídy v klonu
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 10000));
 
     console.log("Generuji PDF string...");
 
