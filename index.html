@@ -46,23 +46,26 @@
 	<style>
 
 @media print {
-    /* Skryjeme vše kromě reportu */
+    /* Skryjeme vše a odstraníme z toku stránky */
     body * {
-        visibility: hidden;
-        margin: 0;
-        padding: 0;
+        display: none !important;
     }
 
-    #pdf-source-data, #pdf-source-data * {
-        visibility: visible;
+    /* Zobrazíme pouze report a jeho rodičovské kontejnery */
+    #pdf-source-data, 
+    #pdf-source-data *,
+    .view.active, /* Pokud je report uvnitř aktivního pohledu */
+    main { 
+        display: block !important;
+        visibility: visible !important;
     }
 
     #pdf-source-data {
-        /* ODSTRANIT: position: absolute; top: 0; */
-        position: relative; /* Změna na relative */
+        position: absolute; /* Zkuste se vrátit k absolute, ale s top: 0 */
+        top: 0;
+        left: 0;
         width: 100%;
-        display: block !important;
-        margin: 0 auto;
+        margin: 0;
         padding: 0;
     }
 
