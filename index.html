@@ -1390,7 +1390,7 @@ try {
     const opt = {
         margin: 10,
         filename: 'report.pdf',
-        image: { type: 'jpeg', quality: 0.9 },
+        image: { type: 'jpeg', quality: 0.8 },
         html2canvas: { 
             scale: 1, 
             useCORS: true,
@@ -1402,7 +1402,7 @@ try {
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
-    console.log("📄 Generuji komprimované PDF (Scale: 1, Quality: 0.7)...");
+    console.log("📄 Generuji komprimované PDF (Scale: 1, Quality: 0.8)...");
 
     // Použijeme Worker API
     const worker = html2pdf().set(opt).from(element);
