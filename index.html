@@ -1219,7 +1219,7 @@ async function evaluateSmall() {
         // VLOŽENÍ ODDĚLOVAČE: Pokud narazíme na první správnou odpověď (weight === 1)
         if (weight === 1 && !separatorInserted) {
             detailHTML += `
-                <div class="my-12 p-8 bg-emerald-50 border-2 border-emerald-200 rounded-3xl text-center shadow-sm break-inside-avoid">
+                <div class="my-12 p-8 bg-emerald-50 border-2 border-emerald-200 rounded-3xl text-center shadow-sm" style="page-break-inside: avoid; break-inside: avoid;">
                     <div class="inline-flex items-center justify-center w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full mb-4">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -1239,7 +1239,7 @@ async function evaluateSmall() {
         let alertBoxHTML = "";
         if (weight === 1) {
             alertBoxHTML = `
-                <div class="w-full p-3 bg-green-100 border border-green-200 rounded-xl mb-4">
+                <div class="w-full p-3 bg-green-100 border border-green-200 rounded-xl mb-4" style="page-break-inside: avoid; break-inside: avoid;">
                     <p class="text-green-800 text-sm font-bold">
                         ✅ Vaše odpověď: <span class="uppercase">"${textAns}"</span> byla vyhodnocena jako bezpečná.
                     </p>
@@ -1250,7 +1250,7 @@ async function evaluateSmall() {
             const textColor = weight < 0.5 ? "text-red-800" : "text-amber-800";
             
             alertBoxHTML = `
-                <div class="w-full p-4 ${bgColor} border rounded-xl mb-4 shadow-sm">
+                <div class="w-full p-4 ${bgColor} border rounded-xl mb-4 shadow-sm" style="page-break-inside: avoid; break-inside: avoid;">
                     <p class="${textColor} text-sm font-bold leading-relaxed">
                         ⚠️ Vaše odpověď: <span class="uppercase">"${textAns}"</span> byla vyhodnocena jako ${severity}. 
                         Zvažte prosím níže uvedená opatření a doporučení.
@@ -1263,11 +1263,11 @@ async function evaluateSmall() {
         if (q.checklist) { 
             const items = q.checklist.split(';');
             checklistHTML = `
-                <div class="mt-6 bg-amber-50 border border-amber-200 rounded-2xl p-6">
+                <div class="mt-6 bg-amber-50 border border-amber-200 rounded-2xl p-6" style="page-break-inside: avoid; break-inside: avoid;">
                     <h4 class="font-bold text-amber-900 uppercase text-xs tracking-widest mb-4">✅ Akční checklist pro vás</h4>
                     <div class="space-y-3">
                         ${items.map(i => `
-                            <div class="flex items-center gap-3 text-sm text-amber-900">
+                            <div class="flex items-center gap-3 text-sm text-amber-900" style="page-break-inside: avoid; break-inside: avoid;">
                                 <span class="flex-grow">${i.trim()}</span>
                                 <input type="checkbox" class="w-5 h-5 rounded border-amber-300 text-amber-600 focus:ring-amber-500 cursor-pointer">
                             </div>
@@ -1277,10 +1277,11 @@ async function evaluateSmall() {
         }
 
         // --- HLAVNÍ BLOK OTÁZKY ---
-        // Přidán inline styl style="page-break-inside: avoid; break-inside: avoid;" pro maximální kompatibilitu s html2canvas/jsPDF
+        // Zde byla ODSTRANĚNA třída break-inside-avoid, aby se karta mohla rozdělit mezi stránky a nevznikaly prázdné mezery.
+        // Místo toho chráníme vnitřní elementy individuálně.
         detailHTML += `
-            <div class="mb-10 p-6 bg-white border border-slate-200 rounded-2xl shadow-sm break-inside-avoid w-full text-left" style="page-break-inside: avoid; break-inside: avoid;">
-                <div class="mb-4">
+            <div class="mb-10 p-6 bg-white border border-slate-200 rounded-2xl shadow-sm w-full text-left">
+                <div class="mb-4" style="break-after: avoid; page-break-after: avoid;">
                     <span class="text-[10px] font-bold text-indigo-500 uppercase tracking-widest">${q.cat || 'Bezpečnost'}</span>
                     <h3 class="text-lg font-bold text-slate-900">${q.id}. ${q.q}</h3>
                 </div>
@@ -1288,28 +1289,28 @@ async function evaluateSmall() {
                 ${alertBoxHTML}
 
                 <div class="space-y-4">
-                    <div class="bg-slate-50 p-4 rounded-xl border-l-4 border-indigo-400">
+                    <div class="bg-slate-50 p-4 rounded-xl border-l-4 border-indigo-400" style="page-break-inside: avoid; break-inside: avoid;">
                         <p class="text-slate-600 text-sm italic mb-2">${q.eval || ''}</p>
                         <p class="text-slate-900 text-sm font-medium"><strong>Shrnutí:</strong> ${q.rec || ''}</p>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="p-4 bg-emerald-50 rounded-xl border border-emerald-100">
+                        <div class="p-4 bg-emerald-50 rounded-xl border border-emerald-100" style="page-break-inside: avoid; break-inside: avoid;">
                             <p class="text-[10px] font-bold text-emerald-700 uppercase mb-1">✅ Zásadní pravidlo</p>
                             <p class="text-sm text-emerald-900">${q.rule || 'Není definováno'}</p>
                         </div>
-                        <div class="p-4 bg-red-50 rounded-xl border border-red-100">
+                        <div class="p-4 bg-red-50 rounded-xl border border-red-100" style="page-break-inside: avoid; break-inside: avoid;">
                             <p class="text-[10px] font-bold text-red-700 uppercase mb-1">❌ Co nedělat</p>
                             <div class="text-sm text-red-900">${formatBySemicolon(q.dont || '')}</div>
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="p-4 bg-indigo-50 rounded-xl border border-indigo-100">
+                        <div class="p-4 bg-indigo-50 rounded-xl border border-indigo-100" style="page-break-inside: avoid; break-inside: avoid;">
                             <p class="text-[10px] font-bold text-indigo-700 uppercase mb-1">💡 Doporučení zdarma</p>
                             <div class="text-sm text-indigo-900">${formatBySemicolon(q.recFree || 'Standardní postup')}</div>
                         </div>
-                        <div class="p-4 bg-slate-900 rounded-xl text-white">
+                        <div class="p-4 bg-slate-900 rounded-xl text-white" style="page-break-inside: avoid; break-inside: avoid;">
                             <p class="text-[10px] font-bold text-indigo-300 uppercase mb-1">💰 Placené řešení (Profi)</p>
                             <div class="text-sm text-slate-200">${formatBySemicolon(q.recPaid || 'Konzultujte s odborníkem')}</div>
                         </div>
@@ -1326,16 +1327,16 @@ async function evaluateSmall() {
     // Vložení obsahu do výsledkového divu
     resDiv.innerHTML = `
         <div id="pdf-source-data" class="space-y-8 p-4 w-full">
-            <div class="text-center border-b-2 border-indigo-600 pb-6">
+            <div class="text-center border-b-2 border-indigo-600 pb-6" style="page-break-inside: avoid; break-inside: avoid;">
                 <h1 class="text-2xl font-black uppercase tracking-tighter">Security Monitor - Kompletní Report</h1>
                 <p class="text-slate-500 italic text-sm">Datum kontroly: ${new Date().toLocaleDateString('cs-CZ')}</p>
             </div>
-            <div class="p-8 bg-white rounded-3xl border-2 ${percent > 70 ? 'border-green-500' : 'border-red-500'} text-center shadow-md">
+            <div class="p-8 bg-white rounded-3xl border-2 ${percent > 70 ? 'border-green-500' : 'border-red-500'} text-center shadow-md" style="page-break-inside: avoid; break-inside: avoid;">
                 <div class="text-6xl font-black ${percent > 70 ? 'text-green-600' : 'text-red-600'} mb-2">${percent}%</div>
                 <p class="text-lg font-bold uppercase tracking-widest">${percent > 70 ? 'Zabezpečeno' : 'Vysoké riziko'}</p>
             </div>
             <div class="mt-10">
-                <h2 class="text-xl font-bold text-slate-800 mb-6 uppercase tracking-tight border-b pb-2 text-left">Analýza jednotlivých bodů</h2>
+                <h2 class="text-xl font-bold text-slate-800 mb-6 uppercase tracking-tight border-b pb-2 text-left" style="break-after: avoid; page-break-after: avoid;">Analýza jednotlivých bodů</h2>
                 <div class="flex flex-col gap-2 w-full">${detailHTML}</div>
             </div>
         </div>
@@ -1391,21 +1392,21 @@ try {
     const opt = {
         margin: 10,
         filename: 'report.pdf',
-        image: { type: 'jpeg', quality: 0.8 },
+        image: { type: 'jpeg', quality: 0.95 }, // Mírné zvýšení kvality pro ostřejší text
         html2canvas: { 
-            scale: 1, 
+            scale: 2, // Zvýšení scale na 2 pro čisté vykreslení bez rozmazání a chyb na konci stránek
             useCORS: true,
             logging: false,
             letterRendering: true,
-            scrollY: 0, // Důležité: zabrání posunu obsahu, pokud je stránka odscrollovaná
+            scrollY: 0, 
             scrollX: 0
         },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        // OPRAVA PRO TIŠTĚNÍ/STRÁNKOVÁNÍ: Zabraní rozřezání elementů s třídou .break-inside-avoid
-        pagebreak: { mode: ['css', 'avoid-all'] }
+        // PŘEDÁNÍ KONTROLY STRÁNKOVÁNÍ ČISTĚ NA CSS (respektuje inline styly avoid-inside)
+        pagebreak: { mode: ['css'] }
     };
 
-    console.log("📄 Generuji komprimované PDF (Scale: 1, Quality: 0.8)...");
+    console.log("📄 Generuji komprimované PDF...");
 
     // Použijeme Worker API
     const worker = html2pdf().set(opt).from(element);
