@@ -1421,7 +1421,7 @@ async function evaluateSmall() {
             <div class="flex gap-3">
                 <span class="text-blue-600">ℹ️</span>
                 <p class="text-sm text-blue-800">
-                    <strong>Upozornění:</strong> Kompletní interaktivní report s analýzou byl právě odeslán přímo na Váš e-mail pro pohodlné čtení na telefonu i počítači bez složitého stahování.
+                    <strong>Upozornění:</strong> Kompletní interaktivní report s analýzou byl právě odeslán přímo na Váš e-mail pro pohodlné čtení na telefonu i počítači.
                 </p>
             </div>
         </div>
@@ -1449,7 +1449,7 @@ async function evaluateSmall() {
     resDiv.classList.remove('hidden');
     resDiv.scrollIntoView({ behavior: 'smooth' });
 
-    // --- SESTAVENÍ CELÉHO HTML E-MAILU S RESPONSIVNÍM OBRÁBĚNÍM ---
+    // --- SESTAVENÍ CELÉHO HTML E-MAILU ---
     const scoreColor = percent > 70 ? '#16a34a' : '#dc2626';
     const scoreBorder = percent > 70 ? '#22c55e' : '#ef4444';
     const scoreText = percent > 70 ? 'ZABEZPEČENO' : 'VYSOKÉ RIZIKO';
@@ -1467,7 +1467,6 @@ async function evaluateSmall() {
             <tr>
                 <td align="center">
                     <table width="100%" max-width="640" cellspacing="0" cellpadding="0" border="0" style="max-width: 640px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
-                        
                         <tr>
                             <td style="padding: 30px; background-color: #ffffff; text-align: center; border-bottom: 2px solid #6366f1;">
                                 <h1 style="margin: 0; font-family: sans-serif; font-size: 24px; font-weight: 900; color: #0f172a; text-transform: uppercase; letter-spacing: -0.5px;">Security Monitor</h1>
@@ -1475,28 +1474,21 @@ async function evaluateSmall() {
                                 <p style="margin: 5px 0 0 0; font-family: sans-serif; font-size: 12px; color: #94a3b8;">Datum kontroly: ${new Date().toLocaleDateString('cs-CZ')}</p>
                             </td>
                         </tr>
-
                         <tr>
                             <td style="padding: 30px; background-color: #ffffff;">
-                                
                                 <div style="margin-bottom: 35px; padding: 25px; background-color: #ffffff; border: 2px solid ${scoreBorder}; border-radius: 16px; text-align: center;">
                                     <div style="font-family: sans-serif; font-size: 54px; font-weight: 900; color: ${scoreColor}; margin-bottom: 2px;">${percent}%</div>
                                     <p style="margin: 0; font-family: sans-serif; font-size: 16px; font-weight: bold; color: #1e293b; letter-spacing: 1px;">STAV: ${scoreText}</p>
                                 </div>
-
                                 <h2 style="margin: 0 0 20px 0; font-family: sans-serif; font-size: 18px; font-weight: bold; color: #1e293b; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">Analýza jednotlivých bodů</h2>
-                                
                                 ${emailDetailHTML}
-
                             </td>
                         </tr>
-
                         <tr>
                             <td style="padding: 20px; background-color: #f8fafc; text-align: center; border-top: 1px solid #e2e8f0;">
                                 <p style="margin: 0; font-family: sans-serif; font-size: 12px; color: #94a3b8;">Tento e-mail byl automaticky vygenerován systémem Security Monitor na základě Vašeho testu.</p>
                             </td>
                         </tr>
-
                     </table>
                 </td>
             </tr>
@@ -1515,8 +1507,8 @@ async function evaluateSmall() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 name: userName,
-                reportHtml: fullEmailHtml, // Posíláme celý plnohodnotný design v parametru reportHtml
-                pdfData: null // PDF už vůbec negenerujeme ani nezatěžujeme paměť prohlížeče
+                reportHtml: fullEmailHtml, 
+                pdfData: null 
             })
         });
 
@@ -1529,11 +1521,10 @@ async function evaluateSmall() {
     } catch (apiError) {
         console.error("❌ Chyba při fetch požadavku na API:", apiError);
     }
-
 } catch (error) {
     console.error("🔥 Kritická chyba v průběhu vyhodnocení:", error);
 }
-} // Konec funkce evaluateSmall
+} // TATO UZAVÍRACÍ ZÁVORKA JE NYNÍ SPRÁVNĚ NA SVÉM MÍSTĚ
 function exportToPDF() {
 
     window.print();
