@@ -1219,7 +1219,7 @@ async function evaluateSmall() {
         // VLOŽENÍ ODDĚLOVAČE: Pokud narazíme na první správnou odpověď (weight === 1)
         if (weight === 1 && !separatorInserted) {
             detailHTML += `
-                <div class="my-12 p-8 bg-emerald-50 border-2 border-emerald-200 rounded-3xl text-center shadow-sm">
+                <div class="my-12 p-8 bg-emerald-50 border-2 border-emerald-200 rounded-3xl text-center shadow-sm break-inside-avoid">
                     <div class="inline-flex items-center justify-center w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full mb-4">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -1277,8 +1277,9 @@ async function evaluateSmall() {
         }
 
         // --- HLAVNÍ BLOK OTÁZKY ---
+        // Přidán inline styl style="page-break-inside: avoid; break-inside: avoid;" pro maximální kompatibilitu s html2canvas/jsPDF
         detailHTML += `
-            <div class="mb-10 p-6 bg-white border border-slate-200 rounded-2xl shadow-sm break-inside-avoid w-full text-left">
+            <div class="mb-10 p-6 bg-white border border-slate-200 rounded-2xl shadow-sm break-inside-avoid w-full text-left" style="page-break-inside: avoid; break-inside: avoid;">
                 <div class="mb-4">
                     <span class="text-[10px] font-bold text-indigo-500 uppercase tracking-widest">${q.cat || 'Bezpečnost'}</span>
                     <h3 class="text-lg font-bold text-slate-900">${q.id}. ${q.q}</h3>
@@ -1354,7 +1355,7 @@ async function evaluateSmall() {
             <a href="https://drive.google.com/file/d/1BmeXBhOKr7j6cGcvmg20c86A2DgJqvar/view?usp=drive_link" 
                target="_blank"
                class="no-print w-full bg-slate-900 text-white py-4 rounded-xl font-bold hover:bg-slate-800 transition shadow-lg flex items-center justify-center gap-2">
-               <span>📥</span> STÁHNOUT 10 ZÁKLADNÍCH PRAVIDEL BEZPEČNOSTI (PDF)
+                <span>📥</span> STÁHNOUT 10 ZÁKLADNÍCH PRAVIDEL BEZPEČNOSTI (PDF)
             </a>
         </div>
 
@@ -1362,7 +1363,7 @@ async function evaluateSmall() {
             <a href="https://drive.google.com/file/d/1FjHqO-yO9pkdA6bdxKc-w_NLw5xxHNdx/view?usp=drivesdk" 
                target="_blank"
                class="no-print w-full bg-slate-900 text-white py-4 rounded-xl font-bold hover:bg-slate-800 transition shadow-lg flex items-center justify-center gap-2">
-               <span>📖</span> STÁHNOUT E-BOOK (PDF)
+                <span>📖</span> STÁHNOUT E-BOOK (PDF)
             </a>
         </div>
     `;
@@ -1399,7 +1400,9 @@ try {
             scrollY: 0, // Důležité: zabrání posunu obsahu, pokud je stránka odscrollovaná
             scrollX: 0
         },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        // OPRAVA PRO TIŠTĚNÍ/STRÁNKOVÁNÍ: Zabraní rozřezání elementů s třídou .break-inside-avoid
+        pagebreak: { mode: ['css', 'avoid-all'] }
     };
 
     console.log("📄 Generuji komprimované PDF (Scale: 1, Quality: 0.8)...");
