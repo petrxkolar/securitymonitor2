@@ -2,25 +2,30 @@ import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+// --- TATO ČÁST JE KLÍČOVÁ ---
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: '10mb', // Ponecháno pro jistotu, i když HTML e-mail bude mít jen pár desítek KB
+      sizeLimit: '10mb', // Zvýší limit pro příjem dat na 10 MB
     },
   },
 };
 
 export default async function handler(req, res) {
-  // Změna: Místo pdfData nyní přijímáme reportHtml, který obsahuje kompletní vygenerovaný design
-  const { email, name, reportHtml } = req.body;
+  const { email, name, pdfData } = req.body;
 
   try {
     const data = await resend.emails.send({
       from: 'Resend Sandbox <onboarding@resend.dev>', 
       to: ['petrxkolar@seznam.cz'], 
       subject: `Security Report - ${name}`,
-      // Změna: Kompletní HTML kód se posílá přímo jako tělo e-mailu
-      html: reportHtml, 
+      html: `<p>Dobrý den, v příloze naleznete svůj report pro uživatele ${name}.</p>`,
+      attachments: [
+        {
+          filename: 'report.pdf',
+          content: pdfData,
+        },
+      ],
     });
 
     if (data.error) {
