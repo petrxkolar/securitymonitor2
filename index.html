@@ -1375,70 +1375,77 @@ async function evaluateSmall() {
     resDiv.classList.remove('hidden');
     resDiv.scrollIntoView({ behavior: 'smooth' });
 
-// --- NOVÁ ČÁST: GENEROVÁNÍ PDF A ODESLÁNÍ E-MAILU ---
-try {
+ry {
     const nameInput = document.querySelector('input[placeholder*="jméno"]');
+    const emailInput = document.querySelector('input[type="email"]');
+
     const userName = nameInput ? nameInput.value : "Uživatel";
+    const userEmail = emailInput ? emailInput.value : "";
+
     const element = document.getElementById('pdf-source-data');
 
     if (!element) {
-        console.error("Chyba: Element #pdf-source-data nebyl nalezen!");
+        console.error("❌ Chyba: Element #pdf-source-data nebyl nalezen!");
         return;
     }
 
-    console.log("🚀 Start procesu: Příprava generování PDF...");
+    console.log("🚀 Start procesu: Příprava HTML reportu...");
 
-    const opt = {
-        margin: 10,
-        filename: 'report.pdf',
-        image: { type: 'jpeg', quality: 0.8 }, // Mírné zvýšení kvality pro ostřejší text
-        html2canvas: { 
-            scale: 1, // Zvýšení scale na 2 pro čisté vykreslení bez rozmazání a chyb na konci stránek
-            useCORS: true,
-            logging: false,
-            letterRendering: true,
-            scrollY: 0, 
-            scrollX: 0
-        },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        // PŘEDÁNÍ KONTROLY STRÁNKOVÁNÍ ČISTĚ NA CSS (respektuje inline styly avoid-inside)
-        pagebreak: { mode: ['css'] }
-    };
+    // Získání čistého HTML obsahu reportu
+    const reportHTML = element.innerHTML;
 
-    console.log("📄 Generuji komprimované PDF...");
+    // Kompletní HTML dokument
+    const fullHTMLDocument = `
+        <!DOCTYPE html>
+        <html lang="cs">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Security Monitor Report</title>
 
-    // Použijeme Worker API
-    const worker = html2pdf().set(opt).from(element);
-    
-    // Získáme PDF jako Blob, abychom mohli změřit velikost
-    const pdfBlob = await worker.output('blob');
-    const fileSizeMB = (pdfBlob.size / (1024 * 1024)).toFixed(2);
-    console.log(`📊 Velikost generovaného PDF: ${fileSizeMB} MB`);
+            <script src="https://cdn.tailwindcss.com"></script>
 
-    // Převedeme na Data URL pro odeslání
-    const pdfDataUri = await worker.output('datauristring');
-    
-    if (!pdfDataUri) {
-        console.error("❌ Knihovna html2pdf vrátila prázdný výsledek.");
-        return;
-    }
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    background: #f8fafc;
+                    padding: 20px;
+                    color: #0f172a;
+                }
 
-    console.log("✨ PDF vygenerováno, čistím data pro odeslání...");
-    const cleanBase64 = pdfDataUri.split('base64,')[1];
+                * {
+                    box-sizing: border-box;
+                }
+            </style>
+        </head>
+        <body>
+            ${reportHTML}
+        </body>
+        </html>
+    `;
 
-    console.log("📨 Odesílám e-mail přes API klientský report...");
+    console.log("📨 Odesílám HTML report přes API...");
+
     const response = await fetch('/api/send-report', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+            'Content-Type': 'application/json'
+        },
+
         body: JSON.stringify({
             name: userName,
-            reportHtml: `<h1>Security Report</h1><p>Dobrý den, v příloze zasíláme výsledek analýzy pro: ${userName}.</p>`,
-            pdfData: cleanBase64 
+            email: userEmail,
+
+            // DŮLEŽITÉ:
+            htmlData: fullHTMLDocument
         })
     });
 
     if (response.ok) {
-        console.log("%c✅ ÚSPĚCH: Report byl úspěšně odeslán na Váš e-mail.", "color: green; font-weight: bold;");
+        console.log(
+            "%c✅ ÚSPĚCH: HTML report byl úspěšně odeslán.",
+            "color: green; font-weight: bold;"
+        );
     } else {
         const errorText = await response.text();
         console.error("❌ API vrátilo chybu při odesílání:", errorText);
