@@ -1369,13 +1369,15 @@ async function evaluateSmall() {
     `;
 
     // ZOBRAZENÍ odkaz TLAČÍTEK 
-    document.getElementById('download-rules-pdf').classList.remove('hidden');
-    document.getElementById('download-e-book-pdf').classList.remove('hidden'); 
-    
-    resDiv.classList.remove('hidden');
-    resDiv.scrollIntoView({ behavior: 'smooth' });
+document.getElementById('download-rules-pdf').classList.remove('hidden');
+document.getElementById('download-e-book-pdf').classList.remove('hidden');
 
+resDiv.classList.remove('hidden');
+resDiv.scrollIntoView({ behavior: 'smooth' });
+
+// --- GENEROVÁNÍ HTML A ODESLÁNÍ E-MAILU ---
 try {
+
     const nameInput = document.querySelector('input[placeholder*="jméno"]');
     const emailInput = document.querySelector('input[type="email"]');
 
@@ -1391,43 +1393,45 @@ try {
 
     console.log("🚀 Start procesu: Příprava HTML reportu...");
 
-    // Získání čistého HTML obsahu reportu
-    const reportHTML = element.innerHTML;
+    // Vezmeme celý HTML obsah reportu
+    const reportHTML = element.outerHTML;
 
     // Kompletní HTML dokument
     const fullHTMLDocument = `
-        <!DOCTYPE html>
-        <html lang="cs">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Security Monitor Report</title>
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Monitor Report</title>
 
-            <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
 
-            <style>
-                body {
-                    font-family: Arial, sans-serif;
-                    background: #f8fafc;
-                    padding: 20px;
-                    color: #0f172a;
-                }
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f8fafc;
+            padding: 20px;
+            color: #0f172a;
+        }
 
-                * {
-                    box-sizing: border-box;
-                }
-            </style>
-        </head>
-        <body>
-            ${reportHTML}
-        </body>
-        </html>
-    `;
+        * {
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+
+<body>
+    ${reportHTML}
+</body>
+</html>
+`;
 
     console.log("📨 Odesílám HTML report přes API...");
 
     const response = await fetch('/api/send-report', {
         method: 'POST',
+
         headers: {
             'Content-Type': 'application/json'
         },
@@ -1435,27 +1439,36 @@ try {
         body: JSON.stringify({
             name: userName,
             email: userEmail,
-
-            // DŮLEŽITÉ:
             htmlData: fullHTMLDocument
         })
     });
 
     if (response.ok) {
+
         console.log(
             "%c✅ ÚSPĚCH: HTML report byl úspěšně odeslán.",
             "color: green; font-weight: bold;"
         );
+
     } else {
+
         const errorText = await response.text();
-        console.error("❌ API vrátilo chybu při odesílání:", errorText);
+
+        console.error(
+            "❌ API vrátilo chybu při odesílání:",
+            errorText
+        );
     }
 
 } catch (error) {
-    console.error("🔥 Kritická chyba při procesu odesílání:", error);
+
+    console.error(
+        "🔥 Kritická chyba při procesu odesílání:",
+        error
+    );
 }
+
 } // Konec funkce evaluateSmall
-			
 function exportToPDF() {
 
     window.print();
