@@ -1369,105 +1369,84 @@ async function evaluateSmall() {
     `;
 
     // ZOBRAZENÍ odkaz TLAČÍTEK 
-document.getElementById('download-rules-pdf').classList.remove('hidden');
-document.getElementById('download-e-book-pdf').classList.remove('hidden');
+    document.getElementById('download-rules-pdf').classList.remove('hidden');
+    document.getElementById('download-e-book-pdf').classList.remove('hidden'); 
+    
+    resDiv.classList.remove('hidden');
+    resDiv.scrollIntoView({ behavior: 'smooth' });
 
-resDiv.classList.remove('hidden');
-resDiv.scrollIntoView({ behavior: 'smooth' });
-
-// --- GENEROVÁNÍ HTML A ODESLÁNÍ E-MAILU ---
+// --- NOVÁ ČÁST: GENEROVÁNÍ PDF A ODESLÁNÍ E-MAILU ---
 try {
-
     const nameInput = document.querySelector('input[placeholder*="jméno"]');
-    const emailInput = document.querySelector('input[type="email"]');
-
     const userName = nameInput ? nameInput.value : "Uživatel";
-    const userEmail = emailInput ? emailInput.value : "";
-
     const element = document.getElementById('pdf-source-data');
 
     if (!element) {
-        console.error("❌ Chyba: Element #pdf-source-data nebyl nalezen!");
+        console.error("Chyba: Element #pdf-source-data nebyl nalezen!");
         return;
     }
 
-    console.log("🚀 Start procesu: Příprava HTML reportu...");
+    console.log("🚀 Start procesu: Příprava generování PDF...");
 
-    // Vezmeme celý HTML obsah reportu
-    const reportHTML = element.outerHTML;
+    const opt = {
+        margin: 10,
+        filename: 'report.pdf',
+        image: { type: 'jpeg', quality: 0.8 }, // Mírné zvýšení kvality pro ostřejší text
+        html2canvas: { 
+            scale: 1, // Zvýšení scale na 2 pro čisté vykreslení bez rozmazání a chyb na konci stránek
+            useCORS: true,
+            logging: false,
+            letterRendering: true,
+            scrollY: 0, 
+            scrollX: 0
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        // PŘEDÁNÍ KONTROLY STRÁNKOVÁNÍ ČISTĚ NA CSS (respektuje inline styly avoid-inside)
+        pagebreak: { mode: ['css'] }
+    };
 
-    // Kompletní HTML dokument
-    const fullHTMLDocument = `
-<!DOCTYPE html>
-<html lang="cs">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Monitor Report</title>
+    console.log("📄 Generuji komprimované PDF...");
 
-    <script src="https://cdn.tailwindcss.com"></script>
+    // Použijeme Worker API
+    const worker = html2pdf().set(opt).from(element);
+    
+    // Získáme PDF jako Blob, abychom mohli změřit velikost
+    const pdfBlob = await worker.output('blob');
+    const fileSizeMB = (pdfBlob.size / (1024 * 1024)).toFixed(2);
+    console.log(`📊 Velikost generovaného PDF: ${fileSizeMB} MB`);
 
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f8fafc;
-            padding: 20px;
-            color: #0f172a;
-        }
+    // Převedeme na Data URL pro odeslání
+    const pdfDataUri = await worker.output('datauristring');
+    
+    if (!pdfDataUri) {
+        console.error("❌ Knihovna html2pdf vrátila prázdný výsledek.");
+        return;
+    }
 
-        * {
-            box-sizing: border-box;
-        }
-    </style>
-</head>
+    console.log("✨ PDF vygenerováno, čistím data pro odeslání...");
+    const cleanBase64 = pdfDataUri.split('base64,')[1];
 
-<body>
-    ${reportHTML}
-</body>
-</html>
-`;
-
-    console.log("📨 Odesílám HTML report přes API...");
-
+    console.log("📨 Odesílám e-mail přes API klientský report...");
     const response = await fetch('/api/send-report', {
         method: 'POST',
-
-        headers: {
-            'Content-Type': 'application/json'
-        },
-
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             name: userName,
-            email: userEmail,
-            htmlData: fullHTMLDocument
+            reportHtml: `<h1>Security Report</h1><p>Dobrý den, v příloze zasíláme výsledek analýzy pro: ${userName}.</p>`,
+            pdfData: cleanBase64 
         })
     });
 
     if (response.ok) {
-
-        console.log(
-            "%c✅ ÚSPĚCH: HTML report byl úspěšně odeslán.",
-            "color: green; font-weight: bold;"
-        );
-
+        console.log("%c✅ ÚSPĚCH: Report byl úspěšně odeslán na Váš e-mail.", "color: green; font-weight: bold;");
     } else {
-
         const errorText = await response.text();
-
-        console.error(
-            "❌ API vrátilo chybu při odesílání:",
-            errorText
-        );
+        console.error("❌ API vrátilo chybu při odesílání:", errorText);
     }
 
 } catch (error) {
-
-    console.error(
-        "🔥 Kritická chyba při procesu odesílání:",
-        error
-    );
+    console.error("🔥 Kritická chyba při procesu odesílání:", error);
 }
-
 } // Konec funkce evaluateSmall
 function exportToPDF() {
 
