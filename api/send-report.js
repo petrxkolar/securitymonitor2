@@ -2,7 +2,6 @@ import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// --- TATO ČÁST JE KLÍČOVÁ ---
 export const config = {
   api: {
     bodyParser: {
@@ -12,18 +11,19 @@ export const config = {
 };
 
 export default async function handler(req, res) {
-  const { email, name, pdfData } = req.body;
+  // Změna: Přijímáme htmlData místo pdfData
+  const { email, name, htmlData } = req.body;
 
   try {
     const data = await resend.emails.send({
       from: 'Resend Sandbox <onboarding@resend.dev>', 
-      to: ['petrxkolar@seznam.cz'], 
+      to: [email || 'petrxkolar@seznam.cz'], // Použije zadaný email nebo fallback
       subject: `Security Report - ${name}`,
-      html: `<p>Dobrý den, v příloze naleznete svůj report pro uživatele ${name}.</p>`,
+      html: `<p>Dobrý den,<br><br>V příloze tohoto e-mailu naleznete svůj vygenerovaný bezpečnostní report pro uživatele <strong>${name}</strong>.<br>Soubor si můžete stáhnout a otevřít v jakémkoliv webovém prohlížeči (Chrome, Firefox, Safari, Edge).</p>`,
       attachments: [
         {
-          filename: 'report.pdf',
-          content: pdfData,
+          filename: 'report.html', // Změna: Koncovka .html
+          content: htmlData,       // Base64 řetězec HTML dokumentu
         },
       ],
     });
