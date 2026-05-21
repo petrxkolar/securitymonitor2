@@ -1370,72 +1370,59 @@ async function evaluateSmall() {
     
     resDiv.classList.remove('hidden');
     resDiv.scrollIntoView({ behavior: 'smooth' });
-
-    // --- GENEROVÁNÍ PDF A ODESLÁNÍ E-MAILU ---
+// --- NOVÁ ČÁST: ODESLÁNÍ HTML REPORTU NA E-MAIL ---
     try {
         const nameInput = document.querySelector('input[placeholder*="jméno"]');
         const userName = nameInput ? nameInput.value : "Uživatel";
-        const element = document.getElementById('pdf-source-data');
-        if (!element) {
+        
+        // Zde vezmeme kompletní vygenerovaný HTML obsah reportu
+        const reportElement = document.getElementById('pdf-source-data');
+        if (!reportElement) {
             console.error("Chyba: Element #pdf-source-data nebyl nalezen!");
             return;
         }
-
-        console.log("🚀 Start procesu: Příprava generování PDF...");
-        const opt = {
-            margin: 10,
-            filename: 'report.pdf',
-            image: { type: 'jpeg', quality: 0.8 },
-            html2canvas: { 
-                scale: 2, // Zvýšeno na 2 pro čisté vykreslení bez rozmazání
-                useCORS: true,
-                logging: false,
-                letterRendering: true,
-                scrollY: 0, 
-                scrollX: 0
-            },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-            pagebreak: { mode: ['css'] }
-        };
-
-        console.log("📄 Generuji komprimované PDF...");
-
-        const worker = html2pdf().set(opt).from(element);
-        const pdfBlob = await worker.output('blob');
-        const fileSizeMB = (pdfBlob.size / (1024 * 1024)).toFixed(2);
-        console.log(`📊 Velikost generovaného PDF: ${fileSizeMB} MB`);
         
-        const pdfDataUri = await worker.output('datauristring');
-        if (!pdfDataUri) {
-            console.error("❌ Knihovna html2pdf vrátila prázdný výsledek.");
-            return;
-        }
+        // Získání čistého HTML kódu z divu
+        const htmlObsahReportu = reportElement.innerHTML;
 
-        console.log("✨ PDF vygenerováno, čistím data pro odeslání...");
-        const cleanBase64 = pdfDataUri.split('base64,')[1];
-        console.log("📨 Odesílám e-mail přes API klientský report...");
+        console.log("📨 Odesílám HTML report přes API na e-mail...");
         
         const response = await fetch('/api/send-report', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 name: userName,
-                reportHtml: `<h1>Security Report</h1><p>Dobrý den, v příloze zasíláme výsledek analýzy pro: ${userName}.</p>`,
-                pdfData: cleanBase64 
+                // Do reportHtml vložíme kompletní HTML strukturu s designem
+                reportHtml: `
+                    <html>
+                    <head>
+                        <meta charset="utf-8">
+                        <title>Security Monitor Report</title>
+                        <script src="https://cdn.tailwindcss.com"></script>
+                    </head>
+                    <body class="bg-slate-50 p-6 font-sans">
+                        <div style="max-width: 800px; margin: 0 auto;">
+                            ${htmlObsahReportu}
+                        </div>
+                    </body>
+                    </html>
+                `
+                // Parametr pdfData (Base64) jsme úplně smazali, protože PDF už neposíláme
             })
         });
 
         if (response.ok) {
-            console.log("%c✅ ÚSPĚCH: Report byl úspěšně odeslán na Váš e-mail.", "color: green; font-weight: bold;");
+            console.log("%c✅ ÚSPĚCH: HTML report byl úspěšně odeslán na Váš e-mail.", "color: green; font-weight: bold;");
         } else {
             const errorText = await response.text();
             console.error("❌ API vrátilo chybu při odesílání:", errorText);
         }
 
     } catch (error) {
-        console.error("🔥 Kritická chyba při procesu odesílání:", error);
+        console.error("🔥 Kritická chyba při procesu odesílání e-mailu:", error);
     }
 } // Konec funkce evaluateSmall
+
 			
 function exportToPDF() {
 
