@@ -1184,10 +1184,11 @@ async function evaluateSmall() {
             if(selectEl) selectEl.parentElement.classList.add('border-red-300', 'bg-red-50');
         } else {
             if(selectEl) selectEl.parentElement.classList.remove('border-red-300', 'bg-red-50');
+            
             const weight = q.options[val];
             totalWeightedScore += weight;
             const textAns = selectEl.options[selectEl.selectedIndex].text;
-            
+
             // Uložíme si data o otázce pro pozdější vykreslení
             resultsArray.push({
                 q: q,
@@ -1198,17 +1199,17 @@ async function evaluateSmall() {
     }
 
     if (!allAnswered) { 
-        alert("Prosím odpovězte na všechny otázky před vyhodnocením.");
+        alert("Prosím odpovězte na všechny otázky před vyhodnocením."); 
         return; 
     }
 
     // 2. SEŘAZENÍ: Nejdříve špatné odpovědi (váha 0, pak 0.1, pak 0.5, nakonec 1)
     resultsArray.sort((a, b) => a.weight - b.weight);
-    
+
     // 3. Generování HTML ze seřazeného pole
     let detailHTML = ""; 
     let separatorInserted = false;
-    
+
     resultsArray.forEach(item => {
         const q = item.q;
         const weight = item.weight;
@@ -1223,7 +1224,7 @@ async function evaluateSmall() {
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                         </svg>
                     </div>
-                    <h3 class="text-xl font-bold text-emerald-900 mb-2">Ostatní odpovědi byly vyhodnocenu jako bezpečné</h3>
+                    <h3 class="text-xl font-bold text-emerald-900 mb-2">Ostatní odpovědi byly vyhodnoceny jako bezpečné</h3>
                     <p class="text-emerald-700 max-w-2xl mx-auto text-sm">
                         Kdybyste v budoucnu potřebovali instrukce, jak s danými oblastmi pracovat, níže jsou uvedené odpovědi 
                         na správně zodpovězené otázky s dalšími instrukcemi, stejně jako pro špatné odpovědi.
@@ -1246,10 +1247,11 @@ async function evaluateSmall() {
             const severity = weight < 0.5 ? "riziková" : "částečně riziková";
             const bgColor = weight < 0.5 ? "bg-red-100 border-red-200" : "bg-amber-100 border-amber-200";
             const textColor = weight < 0.5 ? "text-red-800" : "text-amber-800";
+            
             alertBoxHTML = `
                 <div class="w-full p-4 ${bgColor} border rounded-xl mb-4 shadow-sm" style="page-break-inside: avoid; break-inside: avoid;">
                     <p class="${textColor} text-sm font-bold leading-relaxed">
-                        ⚠️ Vaše odpověď: <span class="uppercase">"${textAns}"</span> byla vyhodnocena jako ${severity}.
+                        ⚠️ Vaše odpověď: <span class="uppercase">"${textAns}"</span> byla vyhodnocena jako ${severity}. 
                         Zvažte prosím níže uvedená opatření a doporučení.
                     </p>
                 </div>`;
@@ -1274,6 +1276,8 @@ async function evaluateSmall() {
         }
 
         // --- HLAVNÍ BLOK OTÁZKY ---
+        // Zde byla ODSTRANĚNA třída break-inside-avoid, aby se karta mohla rozdělit mezi stránky a nevznikaly prázdné mezery.
+        // Místo toho chráníme vnitřní elementy individuálně.
         detailHTML += `
             <div class="mb-10 p-6 bg-white border border-slate-200 rounded-2xl shadow-sm w-full text-left">
                 <div class="mb-4" style="break-after: avoid; page-break-after: avoid;">
@@ -1371,48 +1375,79 @@ async function evaluateSmall() {
     resDiv.classList.remove('hidden');
     resDiv.scrollIntoView({ behavior: 'smooth' });
 
-    // --- ODESLÁNÍ HTML REPORTU NA E-MAIL (Bezpečné sestavení řetězce) ---
-    try {
-        const nameInput = document.querySelector('input[placeholder*="jméno"]');
-        const userName = nameInput ? nameInput.value : "Uživatel";
-        
-        const reportElement = document.getElementById('pdf-source-data');
-        if (!reportElement) {
-            console.error("Chyba: Element #pdf-source-data nebyl znalezen!");
-            return;
-        }
-        
-        const htmlObsahReportu = reportElement.innerHTML;
-        console.log("📨 Odesílám HTML report přes API na e-mail...");
+// --- NOVÁ ČÁST: GENEROVÁNÍ PDF A ODESLÁNÍ E-MAILU ---
+try {
+    const nameInput = document.querySelector('input[placeholder*="jméno"]');
+    const userName = nameInput ? nameInput.value : "Uživatel";
+    const element = document.getElementById('pdf-source-data');
 
-        // Spojení řetězců bez vnořených template akcentů
-        let plneEmailHtml = '<html><head><meta charset="utf-8"><title>Security Monitor Report</title>';
-        plneEmailHtml += '<script src="https://cdn.tailwindcss.com"></script></head>';
-        plneEmailHtml += '<body class="bg-slate-50 p-6 font-sans"><div style="max-width: 800px; margin: 0 auto;">';
-        plneEmailHtml += htmlObsahReportu;
-        plneEmailHtml += '</div></body></html>';
-        
-        const response = await fetch('/api/send-report', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                name: userName,
-                reportHtml: plneEmailHtml
-            })
-        });
-
-        if (response.ok) {
-            console.log("%c✅ ÚSPĚCH: HTML report byl úspěšně odeslán na Váš e-mail.", "color: green; font-weight: bold;");
-        } else {
-            const errorText = await response.text();
-            console.error("❌ API vrátilo chybu při odesílání:", errorText);
-        }
-
-    } catch (error) {
-        console.error("🔥 Kritická chyba při procesu odesílání e-mailu:", error);
+    if (!element) {
+        console.error("Chyba: Element #pdf-source-data nebyl nalezen!");
+        return;
     }
-} // <--- ZDE FUNKCE EVALUATESMALL BEZPEČNĚ KONČÍ
 
+    console.log("🚀 Start procesu: Příprava generování PDF...");
+
+    const opt = {
+        margin: 10,
+        filename: 'report.pdf',
+        image: { type: 'jpeg', quality: 0.8 }, // Mírné zvýšení kvality pro ostřejší text
+        html2canvas: { 
+            scale: 1, // Zvýšení scale na 2 pro čisté vykreslení bez rozmazání a chyb na konci stránek
+            useCORS: true,
+            logging: false,
+            letterRendering: true,
+            scrollY: 0, 
+            scrollX: 0
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        // PŘEDÁNÍ KONTROLY STRÁNKOVÁNÍ ČISTĚ NA CSS (respektuje inline styly avoid-inside)
+        pagebreak: { mode: ['css'] }
+    };
+
+    console.log("📄 Generuji komprimované PDF...");
+
+    // Použijeme Worker API
+    const worker = html2pdf().set(opt).from(element);
+    
+    // Získáme PDF jako Blob, abychom mohli změřit velikost
+    const pdfBlob = await worker.output('blob');
+    const fileSizeMB = (pdfBlob.size / (1024 * 1024)).toFixed(2);
+    console.log(`📊 Velikost generovaného PDF: ${fileSizeMB} MB`);
+
+    // Převedeme na Data URL pro odeslání
+    const pdfDataUri = await worker.output('datauristring');
+    
+    if (!pdfDataUri) {
+        console.error("❌ Knihovna html2pdf vrátila prázdný výsledek.");
+        return;
+    }
+
+    console.log("✨ PDF vygenerováno, čistím data pro odeslání...");
+    const cleanBase64 = pdfDataUri.split('base64,')[1];
+
+    console.log("📨 Odesílám e-mail přes API klientský report...");
+    const response = await fetch('/api/send-report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            name: userName,
+            reportHtml: `<h1>Security Report</h1><p>Dobrý den, v příloze zasíláme výsledek analýzy pro: ${userName}.</p>`,
+            pdfData: cleanBase64 
+        })
+    });
+
+    if (response.ok) {
+        console.log("%c✅ ÚSPĚCH: Report byl úspěšně odeslán na Váš e-mail.", "color: green; font-weight: bold;");
+    } else {
+        const errorText = await response.text();
+        console.error("❌ API vrátilo chybu při odesílání:", errorText);
+    }
+
+} catch (error) {
+    console.error("🔥 Kritická chyba při procesu odesílání:", error);
+}
+} // Konec funkce evaluateSmall
 			
 function exportToPDF() {
 
