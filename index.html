@@ -1370,21 +1370,19 @@ async function evaluateSmall() {
     
     resDiv.classList.remove('hidden');
     resDiv.scrollIntoView({ behavior: 'smooth' });
-// --- NOVÁ ČÁST: ODESLÁNÍ HTML REPORTU NA E-MAIL ---
+
+    // --- ODESLÁNÍ HTML REPORTU NA E-MAIL ---
     try {
         const nameInput = document.querySelector('input[placeholder*="jméno"]');
         const userName = nameInput ? nameInput.value : "Uživatel";
         
-        // Zde vezmeme kompletní vygenerovaný HTML obsah reportu
         const reportElement = document.getElementById('pdf-source-data');
         if (!reportElement) {
             console.error("Chyba: Element #pdf-source-data nebyl nalezen!");
             return;
         }
         
-        // Získání čistého HTML kódu z divu
         const htmlObsahReportu = reportElement.innerHTML;
-
         console.log("📨 Odesílám HTML report přes API na e-mail...");
         
         const response = await fetch('/api/send-report', {
@@ -1392,7 +1390,6 @@ async function evaluateSmall() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 name: userName,
-                // Do reportHtml vložíme kompletní HTML strukturu s designem
                 reportHtml: `
                     <html>
                     <head>
@@ -1407,7 +1404,6 @@ async function evaluateSmall() {
                     </body>
                     </html>
                 `
-                // Parametr pdfData (Base64) jsme úplně smazali, protože PDF už neposíláme
             })
         });
 
@@ -1421,7 +1417,7 @@ async function evaluateSmall() {
     } catch (error) {
         console.error("🔥 Kritická chyba při procesu odesílání e-mailu:", error);
     }
-} // Konec funkce evaluateSmall
+} // Zde funkce evaluateSmall bezpečně končí
 
 			
 function exportToPDF() {
