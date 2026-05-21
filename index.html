@@ -1276,8 +1276,6 @@ async function evaluateSmall() {
         }
 
         // --- HLAVNÍ BLOK OTÁZKY ---
-        // Zde byla ODSTRANĚNA třída break-inside-avoid, aby se karta mohla rozdělit mezi stránky a nevznikaly prázdné mezery.
-        // Místo toho chráníme vnitřní elementy individuálně.
         detailHTML += `
             <div class="mb-10 p-6 bg-white border border-slate-200 rounded-2xl shadow-sm w-full text-left">
                 <div class="mb-4" style="break-after: avoid; page-break-after: avoid;">
@@ -1375,78 +1373,74 @@ async function evaluateSmall() {
     resDiv.classList.remove('hidden');
     resDiv.scrollIntoView({ behavior: 'smooth' });
 
-// --- NOVÁ ČÁST: GENEROVÁNÍ PDF A ODESLÁNÍ E-MAILU ---
-try {
-    const nameInput = document.querySelector('input[placeholder*="jméno"]');
-    const userName = nameInput ? nameInput.value : "Uživatel";
-    const element = document.getElementById('pdf-source-data');
+    // --- NOVÁ ČÁST: SESTAVENÍ HTML SOUBORU A ODESLÁNÍ DO E-MAILU ---
+    try {
+        const nameInput = document.querySelector('input[placeholder*="jméno"]');
+        const userName = nameInput ? nameInput.value : "Uživatel";
+        
+        // Získání zadaného e-mailu z formuláře, pokud existuje input s name="email"
+        const emailInput = document.querySelector('input[name="email"]');
+        const userEmail = emailInput ? emailInput.value : "petrxkolar@seznam.cz";
 
-    if (!element) {
-        console.error("Chyba: Element #pdf-source-data nebyl nalezen!");
-        return;
+        console.log("✨ Sestavování HTML šablony pro přílohu e-mailu...");
+
+        // Vygenerování plnohodnotné izolované HTML stránky se strukturou reportu a Tailwind CSS
+        const fullHtmlReport = `<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Report - ${userName}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 min-h-screen py-10 px-4 font-sans">
+    <div class="max-w-4xl mx-auto bg-white rounded-3xl shadow-sm border border-slate-200 p-4 md:p-8 space-y-8">
+        <div class="text-center border-b-2 border-indigo-600 pb-6">
+            <h1 class="text-2xl font-black uppercase tracking-tighter">Security Monitor - Kompletní Report</h1>
+            <p class="text-slate-500 italic text-sm">Datum kontroly: ${new Date().toLocaleDateString('cs-CZ')}</p>
+            <p class="text-slate-600 font-medium text-sm mt-1">Uživatel: ${userName}</p>
+        </div>
+        <div class="p-8 bg-white rounded-3xl border-2 ${percent > 70 ? 'border-green-500' : 'border-red-500'} text-center shadow-md">
+            <div class="text-6xl font-black ${percent > 70 ? 'text-green-600' : 'text-red-600'} mb-2">${percent}%</div>
+            <p class="text-lg font-bold uppercase tracking-widest">${percent > 70 ? 'Zabezpečeno' : 'Vysoké riziko'}</p>
+        </div>
+        <div class="mt-10">
+            <h2 class="text-xl font-bold text-slate-800 mb-6 uppercase tracking-tight border-b pb-2 text-left">Analýza jednotlivých bodů</h2>
+            <div class="flex flex-col gap-2 w-full">${detailHTML}</div>
+        </div>
+    </div>
+</body>
+</html>`;
+
+        // Bezpečné zakódování HTML do Base64 se správným ošetřením českých znaků (UTF-8)
+        const utf8Bytes = new TextEncoder().encode(fullHtmlReport);
+        let binary = "";
+        for (let i = 0; i < utf8Bytes.length; i++) {
+            binary += String.fromCharCode(utf8Bytes[i]);
+        }
+        const htmlBase64 = btoa(binary);
+
+        console.log("📨 Odesílám HTML report přes API e-mailem...");
+        const response = await fetch('/api/send-report', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: userName,
+                email: userEmail,
+                htmlData: htmlBase64 // Odesíláme čistá html data namísto těžkého pdfData
+            })
+        });
+
+        if (response.ok) {
+            console.log("%c✅ ÚSPĚCH: HTML report byl úspěšně odeslán na Váš e-mail.", "color: green; font-weight: bold;");
+        } else {
+            const errorText = await response.text();
+            console.error("❌ API vrátilo chybu při odesílání e-mailu:", errorText);
+        }
+
+    } catch (error) {
+        console.error("🔥 Kritická chyba při procesu odesílání HTML e-mailu:", error);
     }
-
-    console.log("🚀 Start procesu: Příprava generování PDF...");
-
-    const opt = {
-        margin: 10,
-        filename: 'report.pdf',
-        image: { type: 'jpeg', quality: 0.8 }, // Mírné zvýšení kvality pro ostřejší text
-        html2canvas: { 
-            scale: 1, // Zvýšení scale na 2 pro čisté vykreslení bez rozmazání a chyb na konci stránek
-            useCORS: true,
-            logging: false,
-            letterRendering: true,
-            scrollY: 0, 
-            scrollX: 0
-        },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        // PŘEDÁNÍ KONTROLY STRÁNKOVÁNÍ ČISTĚ NA CSS (respektuje inline styly avoid-inside)
-        pagebreak: { mode: ['css'] }
-    };
-
-    console.log("📄 Generuji komprimované PDF...");
-
-    // Použijeme Worker API
-    const worker = html2pdf().set(opt).from(element);
-    
-    // Získáme PDF jako Blob, abychom mohli změřit velikost
-    const pdfBlob = await worker.output('blob');
-    const fileSizeMB = (pdfBlob.size / (1024 * 1024)).toFixed(2);
-    console.log(`📊 Velikost generovaného PDF: ${fileSizeMB} MB`);
-
-    // Převedeme na Data URL pro odeslání
-    const pdfDataUri = await worker.output('datauristring');
-    
-    if (!pdfDataUri) {
-        console.error("❌ Knihovna html2pdf vrátila prázdný výsledek.");
-        return;
-    }
-
-    console.log("✨ PDF vygenerováno, čistím data pro odeslání...");
-    const cleanBase64 = pdfDataUri.split('base64,')[1];
-
-    console.log("📨 Odesílám e-mail přes API klientský report...");
-    const response = await fetch('/api/send-report', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            name: userName,
-            reportHtml: `<h1>Security Report</h1><p>Dobrý den, v příloze zasíláme výsledek analýzy pro: ${userName}.</p>`,
-            pdfData: cleanBase64 
-        })
-    });
-
-    if (response.ok) {
-        console.log("%c✅ ÚSPĚCH: Report byl úspěšně odeslán na Váš e-mail.", "color: green; font-weight: bold;");
-    } else {
-        const errorText = await response.text();
-        console.error("❌ API vrátilo chybu při odesílání:", errorText);
-    }
-
-} catch (error) {
-    console.error("🔥 Kritická chyba při procesu odesílání:", error);
-}
 } // Konec funkce evaluateSmall
 			
 function exportToPDF() {
