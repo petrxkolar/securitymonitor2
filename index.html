@@ -1276,8 +1276,6 @@ async function evaluateSmall() {
         }
 
         // --- HLAVNÍ BLOK OTÁZKY ---
-        // Zde byla ODSTRANĚNA třída break-inside-avoid, aby se karta mohla rozdělit mezi stránky a nevznikaly prázdné mezery.
-        // Místo toho chráníme vnitřní elementy individuálně.
         detailHTML += `
             <div class="mb-10 p-6 bg-white border border-slate-200 rounded-2xl shadow-sm w-full text-left">
                 <div class="mb-4" style="break-after: avoid; page-break-after: avoid;">
@@ -1323,7 +1321,7 @@ async function evaluateSmall() {
     const percent = Math.round((totalWeightedScore / maxPossibleScore) * 100);
     const resDiv = document.getElementById('small-result');
     
-    // Vložení obsahu do výsledkového divu
+    // 4. VLOŽENÍ OBSAHU DO STRÁNKY
     resDiv.innerHTML = `
         <div id="pdf-source-data" class="space-y-8 p-4 w-full">
             <div class="text-center border-b-2 border-indigo-600 pb-6" style="page-break-inside: avoid; break-inside: avoid;">
@@ -1368,64 +1366,64 @@ async function evaluateSmall() {
         </div>
     `;
 
-    // ZOBRAZENÍ odkaz TLAČÍTEK 
+    // Zobrazení tlačítek a výsledků na stránce
     document.getElementById('download-rules-pdf').classList.remove('hidden');
     document.getElementById('download-e-book-pdf').classList.remove('hidden'); 
     
     resDiv.classList.remove('hidden');
     resDiv.scrollIntoView({ behavior: 'smooth' });
 
-// --- ALTERNATIVA: GENEROVÁNÍ ČISTÉHO HTML JAKO PŘÍLOHY ---
-try {
-    const nameInput = document.querySelector('input[placeholder*="jméno"]');
-    const userName = nameInput ? nameInput.value : "Uživatel";
-    const element = document.getElementById('pdf-source-data');
+    // 5. GENEROVÁNÍ ČISTÉHO HTML JAKO PŘÍLOHY A ODESLÁNÍ DO API (Spustí se korektně na pozadí)
+    try {
+        const nameInput = document.querySelector('input[placeholder*="jméno"]');
+        const userName = nameInput ? nameInput.value : "Uživatel";
+        const element = document.getElementById('pdf-source-data');
 
-    if (!element) {
-        console.error("Chyba: Element #pdf-source-data nebyl nalezen!");
-        return;
+        if (!element) {
+            console.error("Chyba: Element #pdf-source-data nebyl nalezen!");
+            return;
+        }
+
+        const fullHtmlDocument = `
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <title>Security Monitor - Report</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 p-8">
+    <div class="max-w-4xl mx-auto bg-white p-8 rounded-2xl shadow">
+        ${element.innerHTML}
+    </div>
+</body>
+</html>`;
+
+        // Bezpečné kódování stringu do Base64 pro přenos v JSONu
+        const base64Html = btoa(unescape(encodeURIComponent(fullHtmlDocument)));
+
+        console.log("📨 Odesílám e-mail s HTML přílohou...");
+        const response = await fetch('/api/send-report', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: userName,
+                reportHtml: `<h1>Security Report</h1><p>Dobrý den, v příloze zasíláme kompletní výsledky analýzy ve formátu HTML.</p>`,
+                htmlFileData: base64Html
+            })
+        });
+
+        if (response.ok) {
+            console.log("%c✅ ÚSPĚCH: Report v HTML příloze byl odeslán.", "color: green; font-weight: bold;");
+        } else {
+            const errorText = await response.text();
+            console.error("❌ API vrátilo chybu při odesílání:", errorText);
+        }
+
+    } catch (error) {
+        console.error("🔥 Chyba při zpracování e-mailu:", error);
     }
-
-    // Vezmeme kompletní HTML kód reportu
-    // Pro zachování stylů můžete přibalit i CDN na Tailwind
-    const fullHtmlDocument = `
-        <!DOCTYPE html>
-        <html lang="cs">
-        <head>
-            <meta charset="UTF-8">
-            <title>Security Monitor - Report</title>
-            <script src="https://cdn.tailwindcss.com"></script>
-        </head>
-        <body class="bg-slate-50 p-8">
-            <div class="max-w-4xl mx-auto bg-white p-8 rounded-2xl shadow">
-                ${element.innerHTML}
-            </div>
-        </body>
-        </html>
-    `;
-
-    // Převedeme HTML string na Base64 pro bezpečný přenos v JSONu
-    const base64Html = btoa(unescape(encodeURIComponent(fullHtmlDocument)));
-
-    console.log("📨 Odesílám e-mail s HTML přílohou...");
-    const response = await fetch('/api/send-report', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            name: userName,
-            reportHtml: `<h1>Security Report</h1><p>Dobrý den, v příloze zasíláme kompletní výsledky analýzy ve formátu HTML.</p>`,
-            htmlFileData: base64Html // Pošleme jako base64 text
-        })
-    });
-
-    if (response.ok) {
-        console.log("%c✅ ÚSPĚCH: Report v HTML příloze byl odeslán.", "color: green; font-weight: bold;");
-    }
-
-} catch (error) {
-    console.error("🔥 Chyba:", error);
-}
-} // Konec funkce evaluateSmall
+} // ZDE správně končí funkce evaluateSmall
 function exportToPDF() {
 
     window.print();
