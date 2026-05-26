@@ -1375,7 +1375,7 @@ async function evaluateSmall() {
     resDiv.classList.remove('hidden');
     resDiv.scrollIntoView({ behavior: 'smooth' });
 
-// --- NOVÁ ČÁST: GENEROVÁNÍ PDF A ODESLÁNÍ E-MAILU ---
+// --- ALTERNATIVA: GENEROVÁNÍ ČISTÉHO HTML JAKO PŘÍLOHY ---
 try {
     const nameInput = document.querySelector('input[placeholder*="jméno"]');
     const userName = nameInput ? nameInput.value : "Uživatel";
@@ -1386,66 +1386,44 @@ try {
         return;
     }
 
-    console.log("🚀 Start procesu: Příprava generování PDF...");
+    // Vezmeme kompletní HTML kód reportu
+    // Pro zachování stylů můžete přibalit i CDN na Tailwind
+    const fullHtmlDocument = `
+        <!DOCTYPE html>
+        <html lang="cs">
+        <head>
+            <meta charset="UTF-8">
+            <title>Security Monitor - Report</title>
+            <script src="https://cdn.tailwindcss.com"></script>
+        </head>
+        <body class="bg-slate-50 p-8">
+            <div class="max-w-4xl mx-auto bg-white p-8 rounded-2xl shadow">
+                ${element.innerHTML}
+            </div>
+        </body>
+        </html>
+    `;
 
-    const opt = {
-        margin: 10,
-        filename: 'report.pdf',
-        image: { type: 'jpeg', quality: 0.8 }, // Mírné zvýšení kvality pro ostřejší text
-        html2canvas: { 
-            scale: 1, // Zvýšení scale na 2 pro čisté vykreslení bez rozmazání a chyb na konci stránek
-            useCORS: true,
-            logging: false,
-            letterRendering: true,
-            scrollY: 0, 
-            scrollX: 0
-        },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        // PŘEDÁNÍ KONTROLY STRÁNKOVÁNÍ ČISTĚ NA CSS (respektuje inline styly avoid-inside)
-        pagebreak: { mode: ['css'] }
-    };
+    // Převedeme HTML string na Base64 pro bezpečný přenos v JSONu
+    const base64Html = btoa(unescape(encodeURIComponent(fullHtmlDocument)));
 
-    console.log("📄 Generuji komprimované PDF...");
-
-    // Použijeme Worker API
-    const worker = html2pdf().set(opt).from(element);
-    
-    // Získáme PDF jako Blob, abychom mohli změřit velikost
-    const pdfBlob = await worker.output('blob');
-    const fileSizeMB = (pdfBlob.size / (1024 * 1024)).toFixed(2);
-    console.log(`📊 Velikost generovaného PDF: ${fileSizeMB} MB`);
-
-    // Převedeme na Data URL pro odeslání
-    const pdfDataUri = await worker.output('datauristring');
-    
-    if (!pdfDataUri) {
-        console.error("❌ Knihovna html2pdf vrátila prázdný výsledek.");
-        return;
-    }
-
-    console.log("✨ PDF vygenerováno, čistím data pro odeslání...");
-    const cleanBase64 = pdfDataUri.split('base64,')[1];
-
-    console.log("📨 Odesílám e-mail přes API klientský report...");
+    console.log("📨 Odesílám e-mail s HTML přílohou...");
     const response = await fetch('/api/send-report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             name: userName,
-            reportHtml: `<h1>Security Report</h1><p>Dobrý den, v příloze zasíláme výsledek analýzy pro: ${userName}.</p>`,
-            pdfData: cleanBase64 
+            reportHtml: `<h1>Security Report</h1><p>Dobrý den, v příloze zasíláme kompletní výsledky analýzy ve formátu HTML.</p>`,
+            htmlFileData: base64Html // Pošleme jako base64 text
         })
     });
 
     if (response.ok) {
-        console.log("%c✅ ÚSPĚCH: Report byl úspěšně odeslán na Váš e-mail.", "color: green; font-weight: bold;");
-    } else {
-        const errorText = await response.text();
-        console.error("❌ API vrátilo chybu při odesílání:", errorText);
+        console.log("%c✅ ÚSPĚCH: Report v HTML příloze byl odeslán.", "color: green; font-weight: bold;");
     }
 
 } catch (error) {
-    console.error("🔥 Kritická chyba při procesu odesílání:", error);
+    console.error("🔥 Chyba:", error);
 }
 } // Konec funkce evaluateSmall
 function exportToPDF() {
