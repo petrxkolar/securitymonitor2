@@ -5,25 +5,25 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: '10mb', // Ponecháno pro případné větší textové reporty
+      sizeLimit: '10mb',
     },
   },
 };
 
 export default async function handler(req, res) {
-  // Vytáhneme přesně ty proměnné, které posíláte z frontendu
-  const { name, reportHtml, htmlFileData } = req.body;
+  // 1. Přidána proměnná 'email' do destrukturalizace
+  const { name, email, reportHtml, htmlFileData } = req.body;
 
-  if (!htmlFileData) {
-    return res.status(400).json({ error: "Chybí data pro HTML přílohu." });
+  // 2. Přidána validace, zda e-mail dorazil
+  if (!htmlFileData || !email) {
+    return res.status(400).json({ error: "Chybí data pro HTML přílohu nebo e-mail příjemce." });
   }
 
   try {
     const data = await resend.emails.send({
-      from: 'Resend Sandbox <onboarding@resend.dev>', 
-      to: ['petrxkolar@seznam.cz'], 
+      from: 'Security Monitor <onboarding@resend.dev>', // Doporučuji změnit na vaši vlastní doménu, pokud máte ověřenou
+      to: [email], // 3. ZDE JE HLAVNÍ ZMĚNA: Používáme e-mail z formuláře
       subject: `Security Report - ${name}`,
-      // Použijeme text/html průvodní zprávu, kterou posíláte z frontendu
       html: `
         <div style="font-family: sans-serif; color: #334155; max-width: 600px;">
           ${reportHtml}
@@ -34,9 +34,8 @@ export default async function handler(req, res) {
       `,
       attachments: [
         {
-          // Převede jméno na formát bezpečný pro název souboru (např. "jan-novak.html")
           filename: `security-report-${name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '-')}.html`,
-          content: htmlFileData, // Base64 řetězec z frontendu
+          content: htmlFileData,
         },
       ],
     });
