@@ -21,7 +21,7 @@ export default async function handler(req, res) {
 
   try {
     const data = await resend.emails.send({
-      from: 'info@securitymonitor.cz', 
+      from: 'Resend Sandbox <info@securitymonitor.cz>', 
       to: [email], // 3. ZDE JE HLAVNÍ ZMĚNA: Používáme e-mail z formuláře
       subject: `Security Report - ${name}`,
       html: `
