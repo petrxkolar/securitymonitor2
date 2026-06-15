@@ -1378,11 +1378,13 @@ async function evaluateSmall() {
         const nameInput = document.querySelector('input[placeholder*="jméno"]');
         const userName = nameInput ? nameInput.value : "Uživatel";
         const element = document.getElementById('pdf-source-data');
+		const emailInput = document.querySelector('input[type="email"]'); 
+        const userEmail = emailInput ? emailInput.value : null;
 
-        if (!element) {
-            console.error("Chyba: Element #pdf-source-data nebyl nalezen!");
-            return;
-        }
+      if (!userEmail) {
+        alert("Prosím, zadejte platný e-mail před odesláním reportu.");
+        return;
+    }
 
         // Sestavíme kompletní a trvalý HTML dokument s Tailwindem pro staženou přílohu
         // Escapujeme ukončovací značku script (<\/script>), aby HTML parser neukončil předčasně celý skript
@@ -1411,6 +1413,7 @@ async function evaluateSmall() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 name: userName,
+				email: userEmail,
                 reportHtml: `<h1>Security Report</h1><p>Dobrý den, v příloze zasíláme kompletní výsledky analýzy ve formátu HTML.</p>`,
                 htmlFileData: base64Html // Klíčový parametr odpovídající backendu
             })
