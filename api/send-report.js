@@ -27,7 +27,7 @@ export default async function handler(req, res) {
       html: `
         <div style="font-family: sans-serif; color: #334155; max-width: 600px;">
           ${reportHtml}
-          <p style="margin-top: 20px;">Přílohu si stáhněte do počítače a otevřete dvojklikem. Spustí se ve vašem prohlížeči v plné kvalitě a rozlišení.</p>
+          <p style="margin-top: 20px;">Přílohu si stáhněte do počítače a otevřete dvojklikem. Spustí se ve vašem prohlížeči v plné kvalitě a rozlišení. Plné zobrazení v mobilním zařízení bohužel není podporováno.</p>
           <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;">
           <p style="font-size: 11px; color: #94a3b8;">Tato zpráva byla odeslána automaticky aplikací Security Monitor.</p>
         </div>
