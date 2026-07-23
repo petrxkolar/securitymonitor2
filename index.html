@@ -760,30 +760,119 @@
 
 </div>	
 
-<div id="kontakty" class="view-section hidden max-w-5xl mx-auto px-4 mt-12 mb-24">
-    <div class="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm">
-        <h2 class="text-2xl font-bold text-slate-800 mb-6">Kontakty</h2>
-        <p class="text-slate-600 mb-4">Zde můžete uvést své fakturační údaje, e-mail, telefon nebo sídlo firmy.</p>
-        <!-- Sem vložte libovolný HTML obsah pro kontakty -->
+<!-- Pohled: Kontakty -->
+<div id="view-kontakty" class="view-section hidden space-y-8 max-w-3xl mx-auto px-4 my-12">
+    <div class="bg-white p-8 md:p-12 rounded-3xl border border-slate-200 shadow-sm">
+        
+        <h1 class="text-3xl font-black text-slate-900 mb-8 border-b pb-4">Kontakty</h1>
+        
+        <div class="space-y-6 text-slate-600 leading-relaxed">
+            <section>
+                <h2 class="font-bold text-slate-900 uppercase text-sm tracking-wider mb-2">Provozovatel a fakturační údaje</h2>
+                <p class="font-medium text-slate-800">SecurityMonitor, s.r.o.</p>
+                <p>Bezpečnostní 452/4, Praha 1, 110 00</p>
+                <p>IČO: 545589754 | DIČ: CZ545589754</p>
+                <p class="text-xs text-slate-400 mt-1">Společnost je zapsána v obchodním rejstříku vedeném Městským soudem v Praze.</p>
+            </section>
+
+            <section>
+                <h2 class="font-bold text-slate-900 uppercase text-sm tracking-wider mb-2">Zákaznická a technická podpora</h2>
+                <p>E-mail: <a href="mailto:info@securitymonitor.cz" class="text-indigo-600 hover:underline">info@securitymonitor.cz</a></p>
+                <p>Telefon: +420 123 456 789</p>
+                <p class="text-sm text-slate-500 mt-1">Dostupnost: Po–Pá 9:00–17:00</p>
+            </section>
+
+            <section>
+                <h2 class="font-bold text-slate-900 uppercase text-sm tracking-wider mb-2">Bankovní spojení</h2>
+                <p>Číslo účtu: 123456789/0100 (Komerční banka)</p>
+                <p>IBAN: CZ1201000000000123456789</p>
+            </section>
+        </div>
+
+        <div class="mt-10 pt-6 border-t">
+            <button onclick="showView('home')" class="bg-slate-900 text-white px-6 py-2 rounded-xl font-bold hover:bg-slate-800 transition">
+                Zpět na úvod
+            </button>
+        </div>
+
     </div>
 </div>
 
 
 <!-- Pohled: Reklamační řád -->
-<div id="reklamace" class="view-section hidden max-w-5xl mx-auto px-4 mt-12 mb-24">
-    <div class="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm">
-        <h2 class="text-2xl font-bold text-slate-800 mb-6">Reklamační řád</h2>
-        <p class="text-slate-600 mb-4">Zde budou podmínky pro reklamace...</p>
+<div id="view-reklamace" class="view-section hidden space-y-8 max-w-3xl mx-auto px-4 my-12">
+    <div class="bg-white p-8 md:p-12 rounded-3xl border border-slate-200 shadow-sm">
+        
+        <h1 class="text-3xl font-black text-slate-900 mb-8 border-b pb-4">Reklamační řád</h1>
+        
+        <div class="space-y-6 text-slate-600 leading-relaxed">
+            <section>
+                <h2 class="font-bold text-slate-900 uppercase text-sm tracking-wider mb-2">1. Všeobecná ustanovení</h2>
+                <p>Tento reklamační řád upravuje způsob a podmínky reklamace služeb bezpečnostních analýz a auditorství poskytovaných společností SecurityMonitor, s.r.o.</p>
+            </section>
+
+            <section>
+                <h2 class="font-bold text-slate-900 uppercase text-sm tracking-wider mb-2">2. Lhůta pro uplatnění reklamace</h2>
+                <p>Zákazník je povinen dodaný bezpečnostní report nebo výstup služby zkontrolovat bez zbytečného odkladu a případné vady uplatnit nejpozději do 14 dnů od jeho doručení.</p>
+            </section>
+
+            <section>
+                <h2 class="font-bold text-slate-900 uppercase text-sm tracking-wider mb-2">3. Způsob podání reklamace</h2>
+                <p>Reklamaci lze uplatnit elektronicky zasláním e-mailu na adresu <strong class="text-slate-800">reklamace@securitymonitor.cz</strong>. Zpráva musí obsahovat číslo objednávky/faktury a detailní popis vytýkané vady.</p>
+            </section>
+
+            <section>
+                <h2 class="font-bold text-slate-900 uppercase text-sm tracking-wider mb-2">4. Vyřízení reklamace</h2>
+                <p>O reklamaci rozhodneme nejpozději do 3 pracovních dnů. Reklamace bude vyřízena (včetně odstranění vady nebo opravení reportu) bez zbytečného odkladu, nejpozději do 30 dnů ode dne jejího uplatnění.</p>
+            </section>
+        </div>
+
+        <div class="mt-10 pt-6 border-t">
+            <button onclick="showView('home')" class="bg-slate-900 text-white px-6 py-2 rounded-xl font-bold hover:bg-slate-800 transition">
+                Zpět na úvod
+            </button>
+        </div>
+
     </div>
 </div>
 
+
 <!-- Pohled: Obchodní podmínky -->
-<div id="podminky" class="view-section hidden max-w-5xl mx-auto px-4 mt-12 mb-24">
-    <div class="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm">
-        <h2 class="text-2xl font-bold text-slate-800 mb-6">Obchodní podmínky</h2>
-        <p class="text-slate-600 mb-4">Zde budou vaše obchodní podmínky...</p>
+<div id="view-podminky" class="view-section hidden space-y-8 max-w-3xl mx-auto px-4 my-12">
+    <div class="bg-white p-8 md:p-12 rounded-3xl border border-slate-200 shadow-sm">
+        
+        <h1 class="text-3xl font-black text-slate-900 mb-8 border-b pb-4">Obchodní podmínky</h1>
+        
+        <div class="space-y-6 text-slate-600 leading-relaxed">
+            <section>
+                <h2 class="font-bold text-slate-900 uppercase text-sm tracking-wider mb-2">1. Úvodní ustanovení</h2>
+                <p>Tyto všeobecné obchodní podmínky (VOP) upravují práva a povinnosti mezi poskytovatelem (SecurityMonitor, s.r.o.) a objednatelem při poskytování analytických a bezpečnostních služeb.</p>
+            </section>
+
+            <section>
+                <h2 class="font-bold text-slate-900 uppercase text-sm tracking-wider mb-2">2. Objednávka a dodání služby</h2>
+                <p>Služba je objednána odesláním webového formuláře. Na základě zadaných údajů vypracuje poskytovatel bezpečnostní analýzu a doručí ji v elektronické podobě (PDF / webový výstup) na zadaný e-mail.</p>
+            </section>
+
+            <section>
+                <h2 class="font-bold text-slate-900 uppercase text-sm tracking-wider mb-2">3. Cena a platební podmínky</h2>
+                <p>Cena služby je uvedena v aktuálním ceníku na webu nebo v individuální nabídce. Platba probíhá na základě vystavené faktury se splatností 14 dní od doručení výstupu, není-li dohodnuto jinak.</p>
+            </section>
+
+            <section>
+                <h2 class="font-bold text-slate-900 uppercase text-sm tracking-wider mb-2">4. Důvěrnost informací</h2>
+                <p>Obě strany se zavazují zachovávat mlčenlivost o všech důvěrných informacích, bezpečnostních nálezech a datech získaných během poskytování služby.</p>
+            </section>
+        </div>
+
+        <div class="mt-10 pt-6 border-t">
+            <button onclick="showView('home')" class="bg-slate-900 text-white px-6 py-2 rounded-xl font-bold hover:bg-slate-800 transition">
+                Zpět na úvod
+            </button>
+        </div>
+
     </div>
-</div>		
+</div>
 
 
 
