@@ -1920,18 +1920,17 @@ function formatBySemicolon(text) {
 
 	
 
-<!-- Patička webu -->
-<footer class="bg-white border-t border-slate-200 mt-20 py-8 px-4 no-print">
-    <div class="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 text-sm text-slate-600">
-        
-        <!-- Odkazy na stránky -->
-        <div class="flex flex-wrap justify-center md:justify-start gap-4 md:gap-6 font-medium">
-            <button onclick="showView('privacy'); window.scrollTo(0,0);" class="hover:text-indigo-600 transition">Ochrana osobních údajů - GDPR</button>
-            <button onclick="showView('kontakty'); window.scrollTo(0,0);" class="hover:text-indigo-600 transition">Kontakty</button>
-            <button onclick="showView('reklamace'); window.scrollTo(0,0);" class="hover:text-indigo-600 transition">Reklamační řád</button>
-            <button onclick="showView('podminky'); window.scrollTo(0,0);" class="hover:text-indigo-600 transition">Obchodní podmínky</button>
-        </div>
 
+footer class="max-w-5xl mx-auto py-8 px-4 border-t border-slate-200 mt-20 text-center">
+
+    <p class="text-slate-500 text-xs">
+
+        © 2026 SecurityMonitor. Tento web používá pouze nezbytné technické soubory pro své správné fungování. Nepoužíváme žádné analytické ani marketingové cookies třetích stran.
+
+        <button onclick="showView('privacy')" class="text-indigo-600 hover:underline ml-1">Ochrana osobních údajů (GDPR)</button>
+
+    </p>
+	
         <!-- Logo Gopay / Informace o platbě -->
         <div class="flex items-center gap-3">
             <span class="text-xs text-slate-400 font-medium">Bezpečné platby</span>
