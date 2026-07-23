@@ -329,9 +329,18 @@
     </div>
 </div>
 
-            <div id="pricing-section" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+        <section id="pricing-section" class="py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- 1. Tady je tvůj nadpis s poznámkou o DPH -->
+        <div class="text-center mb-10">
+            <h2 class="text-3xl font-black text-slate-900">Ceník analýz</h2>
+            <p class="text-sm text-slate-500 mt-2">Uvedené ceny jsou konečné, poskytovatel není plátce DPH.</p>
+        </div>
+
+        <!-- 2. Tady začíná tvoje mřížka s kartami (už bez id="pricing-section", id patří raději celé sekci nahoře) -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
    
-                
                 <div class="bg-white p-10 rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl transition-all group cursor-pointer flex flex-col min-h-[580px]" onclick="showView('small')">
                     <div class="w-14 h-14 bg-orange-100 text-orange-700 rounded-xl flex items-center justify-center mb-8 shadow-md">
                         <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
@@ -400,12 +409,10 @@
                         <span class="bg-slate-900 text-white px-6 py-3 rounded-xl font-bold text-center block group-hover:bg-black transition-colors">Poptat řešení →</span>
                     </div>
                 </div>
-            </div>
+        </div>
 
-          
- 
-</div>
-
+    </div>
+</section>
         <div id="view-small" class="view space-y-8">
 
     <div class="bg-green-600 text-white p-8 rounded-2xl shadow-lg">
