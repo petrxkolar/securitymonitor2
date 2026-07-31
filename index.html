@@ -413,11 +413,17 @@
 
     
 
-<div id="lead-form-small">
+    <div id="small-form" class="space-y-4"></div>
+
+
+
+    <div id="unlock-container-small" class="bg-indigo-50 border-2 border-dashed border-indigo-200 p-8 rounded-2xl">
+
+        <div id="lead-form-small">
 
             <h3 class="text-xl font-bold text-indigo-900 mb-4 text-center">Chci získat výsledky analýzy</h3>
 
-            <p class="text-sm text-slate-600 mb-6 text-center">Pro pokračování k platbě a vyhodnocení vyplňte prosím základní údaje[cite: 1].</p>
+            <p class="text-sm text-slate-600 mb-6 text-center">Pro pokračování k platbě a vyhodnocení vyplňte prosím základní údaje.</p>
 
             
 
@@ -431,20 +437,13 @@
 
                 <input type="tel" name="phone" required placeholder="Telefon" class="p-3 border rounded-xl outline-none focus:ring-2 ring-indigo-500">
 
-                <div class="md:col-span-2 space-y-3 text-xs text-slate-600 mt-2">
-                    <label class="flex items-start gap-2 cursor-pointer">
-                        <input type="checkbox" name="terms" required class="mt-0.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
-                        <span>Seznámil/a jsem se s <button type="button" onclick="showView('podminky')" class="underline hover:text-indigo-600 font-medium">obchodními podmínkami</button> a <button type="button" onclick="showView('privacy')" class="underline hover:text-indigo-600 font-medium">zásadami ochrany osobních údajů</button> a souhlasím s obchodními podmínkami[cite: 1].</span>
-                    </label>
-                    <label class="flex items-start gap-2 cursor-pointer">
-                        <input type="checkbox" name="withdrawal" required class="mt-0.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
-                        <span>Beru na vědomí, že po úplném poskytnutí služby mohu ztratit právo od smlouvy odstoupit[cite: 1].</span>
-                    </label>
-                    <label class="flex items-start gap-2 cursor-pointer">
-                        <input type="checkbox" name="newsletter" required class="mt-0.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
-                        <span>Souhlasím se zasláním novinek, newsletteru a nabídek služeb Security Monitor[cite: 1].</span>
-                    </label>
-                </div>
+                <div class="md:col-span-2 text-xs text-slate-500 mt-2">
+
+    Kliknutím na tlačítko berete na vědomí, že vaše údaje zpracováváme za účelem vyhotovení analýzy a doručení výsledků. 
+
+    <button type="button" onclick="showView('privacy')" class="underline hover:text-indigo-600">Více o ochraně údajů zde</button>.
+
+</div>
 
                 <div class="md:col-span-2">
 
@@ -459,6 +458,7 @@
             </form>
 
         </div>
+
 
 
         <div id="payment-simulation-small" class="hidden text-center py-6">
