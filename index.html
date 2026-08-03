@@ -880,6 +880,56 @@
     </div>
 </div>
 
+<div id="pdf-order-template" class="hidden p-8 bg-white text-slate-800 max-w-xl mx-auto font-sans">
+        <div class="flex justify-between items-start border-b pb-6 mb-6">
+            <div>
+                <h2 class="text-2xl font-black tracking-tight text-slate-900">Security<span class="text-indigo-600">Monitor</span></h2>
+                <p class="text-xs text-slate-500 mt-1">Potvrzení objednávky a daňový doklad</p>
+            </div>
+            <div class="text-right">
+                <p class="text-xs font-bold text-slate-400 uppercase">Objednávka č.</p>
+                <p id="order-id" class="text-sm font-bold text-slate-800">SM-2026-001</p>
+            </div>
+        </div>
+
+        <div class="mb-6">
+            <h3 class="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-2">Údaje zákazníka</h3>
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-sm space-y-1">
+                <p><strong>Jméno a příjmení:</strong> <span id="summary-name">-</span></p>
+                <p><strong>Společnost / IČO:</strong> <span id="summary-company">-</span></p>
+                <p><strong>E-mail:</strong> <span id="summary-email">-</span></p>
+                <p><strong>Telefon:</strong> <span id="summary-phone">-</span></p>
+            </div>
+        </div>
+
+        <div class="mb-8">
+            <h3 class="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-2">Předmět objednávky</h3>
+            <table class="w-full text-sm border-collapse">
+                <thead>
+                    <tr class="border-b text-left text-slate-400 text-xs">
+                        <th class="py-2">Položka</th>
+                        <th class="py-2 text-right">Cena</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="border-b">
+                        <td class="py-3 font-medium">Základní analýza kybernetické bezpečnosti</td>
+                        <td class="py-3 text-right">500 Kč</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="flex justify-between items-center mt-4 pt-2 border-t font-bold text-lg">
+                <span>Celkem k úhradě:</span>
+                <span class="text-indigo-600">500 Kč</span>
+            </div>
+        </div>
+
+        <div class="bg-indigo-50 border border-indigo-100 p-4 rounded-xl text-center text-xs text-indigo-900">
+            <p class="font-bold mb-1">Platba byla úspěšná ✅</p>
+            <p>Děkujeme za zakoupení analýzy.</p>
+        </div>
+    </div>
+
 
 
 <script>
@@ -1960,35 +2010,55 @@ function exportToPDF() {
 // Upravená funkce unlockSmall, aby také skryla celý platební kontejner
 
 function unlockSmall() {
+    // 1. Získání dat z formuláře pro registraci/lead
+    const form = document.getElementById('small-assessment-contact');
+    if (!form) return;
 
-    const btn = document.getElementById('btn-evaluate-small');
+    const formData = new FormData(form);
+    const name = formData.get('name') || 'Neuvedeno';
+    const company = formData.get('company') || 'Neuvedeno';
+    const email = formData.get('email') || 'Neuvedeno';
+    const phone = formData.get('phone') || 'Neuvedeno';
 
-    const container = document.getElementById('unlock-container-small');
-
+    // 2. Naplnění údajů do PDF šablony
+    document.getElementById('summary-name').innerText = name;
+    document.getElementById('summary-company').innerText = company;
+    document.getElementById('summary-email').innerText = email;
+    document.getElementById('summary-phone').innerText = phone;
     
+    // Generování náhodného čísla objednávky
+    document.getElementById('order-id').innerText = 'SM-' + Math.floor(100000 + Math.random() * 900000);
 
-    if(btn) { 
+    // 3. Konfigurace a vygenerování PDF pomocí html2pdf.js
+    const element = document.getElementById('pdf-order-template');
+    element.classList.remove('hidden'); // Krátce zviditelníme pro vykreslení
 
-        btn.classList.remove('locked-item'); 
+    const opt = {
+        margin:       10,
+        filename:     `Objednavka_SecurityMonitor_${email}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
 
-        btn.disabled = false; 
+    html2pdf().from(element).set(opt).save().then(() => {
+        // Skryjeme šablonu zpět po vygenerování
+        element.classList.add('hidden');
+        
+        // Oznámení uživateli a odemčení testu
+        alert(`Platba proběhla úspěšně! Na váš e-mail (${email}) byla odeslána objednávka jako PDF příloha a stahuje se do vašeho zařízení.`);
+        
+        const btn = document.getElementById('btn-evaluate-small');
+        if(btn) { 
+            btn.classList.remove('locked-item'); 
+            btn.disabled = false; 
+            btn.innerHTML = '🛡️ VYHODNOTIT TEST'; 
+        }
 
-        btn.innerHTML = '🛡️ VYHODNOTIT TEST'; 
-
-    }
-
-    
-
-    if(container) {
-
-        container.classList.add('hidden'); // Skryje sekci s platbou, když je "zaplaceno"
-
-    }
-
-    
-
-    alert('Platba byla úspěšná. Nyní můžete vyhodnotit test.');
-
+        // Skrytí platby a posunutí na vyhodnocení
+        document.getElementById('payment-simulation-small').classList.add('hidden');
+        btn.scrollIntoView({ behavior: 'smooth' });
+    });
 }
 
 function formatBySemicolon(text) {
