@@ -45,55 +45,36 @@
 	<style>
 
 @media print {
-
-    body * {
-
-        visibility: hidden;
-
-        height: 0;
-
-        margin: 0;
-
-        padding: 0;
-
+    /* Skryje všechny přímé potomky body kromě tiskového kontejneru */
+    body > *:not(#pdf-source-data) {
+        display: none !important;
     }
 
-    #pdf-source-data, #pdf-source-data * {
-
-        visibility: visible;
-
-        height: auto;
-
-    }
-
+    /* Nastavení pro samotný tiskový kontejner */
     #pdf-source-data {
-
-        position: absolute;
-
-        left: 0;
-
-        top: 0;
-
-        width: 100%;
-
         display: block !important;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: white !important;
+    }
 
+    /* Zajištění, že vnitřní elementy se vykreslí standardně */
+    #pdf-source-data * {
+        visibility: visible !important;
     }
 
     .no-print {
-
         display: none !important;
-
     }
 
-	.print-block {
-
+    .print-block {
         display: block !important;
-
     }
-
 }
-
 
 
 /* Vylepšená modrá šerpa 'Brzy k dispozici' */
