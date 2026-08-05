@@ -1980,9 +1980,8 @@ async function unlockSmall() {
     document.getElementById('pdf-cust-email').innerText = `E-mail: ${customer.email}`;
     document.getElementById('pdf-cust-phone').innerText = `Telefon: ${customer.phone}`;
 
-    // Zobrazení šablony v DOMu, aby ji html2pdf mohl zpracovat
+    // Získání elementu (je permanentně v DOMu mimo obrazovku, žádné display: block/none)
     const element = document.getElementById('pdf-order-template');
-    element.style.display = 'block';
 
     // 4. Konfigurace html2pdf s nízkou kompresí pro malou velikost souboru
     const opt = {
@@ -1997,9 +1996,6 @@ async function unlockSmall() {
         // Vygenerování Base64 řetězce PDF
         const pdfBase64 = await html2pdf().from(element).set(opt).outputPdf('datauristring');
         
-        // Skrytí šablony
-        element.style.display = 'none';
-
         // 5. Odeslání na váš mini backend
         const response = await fetch('/api/send-order', {
             method: 'POST',
@@ -2017,7 +2013,6 @@ async function unlockSmall() {
         }
     } catch (err) {
         console.error('Chyba při generování PDF / odesílání:', err);
-        element.style.display = 'none';
     }
 
     // 6. Původní logika: Odemčení testu po úspěšné platbě
