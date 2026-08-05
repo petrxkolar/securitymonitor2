@@ -2036,7 +2036,7 @@ function generateOrderNumber(email) {
     const hh = pad(now.getHours());
     const min = pad(now.getMinutes());
     const ss = pad(now.getSeconds());
-    return `${yyyy}${mm}${dd}-${hh}${min}${ss}-${email}`;
+    return `${yyyy}${mm}${dd}-${hh}${min}${ss}`;
 }
 
 function formatBySemicolon(text) {
