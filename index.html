@@ -2559,22 +2559,22 @@ function formatBySemicolon(text) {
     </div>
 
 <!-- Patička webu -->
-<footer class="max-w-6xl mx-auto mt-24 px-4 mb-12 no-print">
+<footer class="max-w-5xl mx-auto mt-24 px-4 mb-12 no-print">
     <!-- Horní oddělující linka nad celou patičkou -->
     <div class="border-t border-slate-200 w-full mb-8"></div>
 
-    <div class="flex flex-col lg:flex-row items-center justify-between gap-6 text-sm text-slate-600 py-2">
+    <div class="flex flex-col items-center gap-6 text-sm text-slate-600 py-2">
         
-        <!-- Odkazy na stránky -->
-        <div class="flex flex-wrap justify-center lg:justify-start gap-3 md:gap-5 font-medium text-xs md:text-sm">
+        <!-- 1. řádek: Odkazy na stránky roztažené přes celou šířku -->
+        <div class="flex flex-wrap justify-center md:justify-between items-center gap-4 w-full font-medium">
             <button type="button" onclick="openInfoModal('privacy')" class="hover:text-indigo-600 transition">Ochrana osobních údajů - GDPR</button>
             <button type="button" onclick="openInfoModal('kontakty')" class="hover:text-indigo-600 transition">Kontakty</button>
             <button type="button" onclick="openInfoModal('reklamace')" class="hover:text-indigo-600 transition">Reklamační řád</button>
             <button type="button" onclick="openInfoModal('podminky')" class="hover:text-indigo-600 transition">Obchodní podmínky</button>
         </div>
 
-        <!-- Logo Gopay a platební metody -->
-        <div class="flex items-center gap-3 flex-wrap justify-center">
+        <!-- 2. řádek: Logo Gopay a platební metody zarovnané doprava (na mobilech na střed) -->
+        <div class="flex items-center gap-3 flex-wrap justify-center md:justify-end w-full pt-2">
             <span class="text-xs text-slate-400 font-medium">Bezpečné platby</span>
             <div class="bg-slate-100 px-3.5 py-2 rounded-xl border border-slate-200 flex items-center gap-2.5 shadow-2xs flex-wrap justify-center">
                 <img src="/icon/GoPay.png" alt="GoPay" class="h-6 w-auto object-contain">
