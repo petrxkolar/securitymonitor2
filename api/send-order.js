@@ -54,7 +54,7 @@ export default async function handler(req, res) {
       attachments: [
         {
           filename: `objednavka-${orderNumber}.pdf`,
-          content: base64Data,
+          content: Buffer.from(base64Data, 'base64'),
         },
       ],
     });
