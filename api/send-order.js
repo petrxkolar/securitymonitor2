@@ -29,21 +29,21 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Chybí data pro PDF přílohu, e-mail zákazníka nebo číslo objednávky." });
   }
 
-  try {
-    const base64Data = pdfBase64.includes(';base64,') 
-      ? pdfBase64.split(';base64,').pop() 
+try {
+    // Spolehlivé očištění: Data URI vždy odděluje data od hlavičky čárkou (',')
+    const base64Data = pdfBase64.includes(',') 
+      ? pdfBase64.split(',').pop() 
       : pdfBase64;
 
     const pdfBuffer = Buffer.from(base64Data, 'base64');
     
-    // --- DALŠÍ LOG ---
     console.log("Velikost vytvořeného PDF Bufferu v bytech:", pdfBuffer.length);
     console.log("--- DEBUG END ---");
 
     if (pdfBuffer.length === 0) {
       return res.status(400).json({ error: "Vygenerovaný PDF Buffer je prázdný (0 bajtů)." });
     }
-
+  
     const data = await resend.emails.send({
       from: 'Security Monitor <info@securitymonitor.cz>',
       to: [customer.email, 'info@securitymonitor.cz'],
