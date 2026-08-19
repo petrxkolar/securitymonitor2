@@ -2403,7 +2403,7 @@ async function unlockSmall() {
     const orderNumber = generateOrderNumber(customer.email);
     const nowFormatted = new Date().toLocaleDateString('cs-CZ') + ' ' + new Date().toLocaleTimeString('cs-CZ');
 
-    // 3. Naplnění šablony pro PDF
+   // 3. Naplnění šablony pro PDF
     document.getElementById('pdf-ord-number').innerText = `Číslo: ${orderNumber}`;
     document.getElementById('pdf-ord-date').innerText = `Datum: ${nowFormatted}`;
     document.getElementById('pdf-cust-name').innerText = customer.name;
@@ -2411,18 +2411,20 @@ async function unlockSmall() {
     document.getElementById('pdf-cust-email').innerText = `E-mail: ${customer.email}`;
     document.getElementById('pdf-cust-phone').innerText = `Telefon: ${customer.phone}`;
 
-    // Získání elementu (je permanentně v DOMu mimo obrazovku, žádné display: block/none)
     const element = document.getElementById('pdf-order-template');
 
-    // 4. Konfigurace html2pdf s nízkou kompresí pro malou velikost souboru
+    // Krátká pauza pro jistotu, stihne se promítnout innerText do DOMu
+    await new Promise(resolve => setTimeout(resolve, 50));
+
+    // 4. Konfigurace html2pdf...
     const opt = {
         margin:       10,
         filename:     `objednavka-${orderNumber}.pdf`,
         image:        { type: 'jpeg', quality: 0.85 },
-        html2canvas:  { scale: 1.2, useCORS: true },
+        html2canvas:  { scale: 1.2, useCORS: true, logging: true }, // logging pomůže v konzoli prohlížeče vidět, co canvas dělá
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
-
+	
     try {
         // Vygenerování Base64 řetězce PDF
         const pdfBase64 = await html2pdf().from(element).set(opt).outputPdf('datauristring');
@@ -2586,7 +2588,7 @@ function formatBySemicolon(text) {
 
 
 <!-- OPRAVENÁ ŠABLONA PRO PDF OBJEDNÁVKU -->
-<div id="pdf-order-template" style="position: fixed; top: 0; left: -9999px; width: 210mm; padding: 15mm; background: #ffffff; font-family: sans-serif; color: #1e293b; box-sizing: border-box;">
+<div id="pdf-order-template" style="position: absolute; top: 0; left: 0; opacity: 0.01; pointer-events: none; z-index: -1000; width: 210mm; padding: 15mm; background: #ffffff; font-family: sans-serif; color: #1e293b; box-sizing: border-box;">
     
     <!-- Hlavička řešená tabulkou místo flexboxu -->
     <table style="width: 100%; border-bottom: 2px solid #4f46e5; padding-bottom: 12px; margin-bottom: 20px; border-collapse: collapse;">
