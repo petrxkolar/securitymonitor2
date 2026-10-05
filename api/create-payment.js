@@ -6,18 +6,22 @@ export default async function handler(req, res) {
   try {
     const { name, email, phone, company } = req.body;
 
-    const goid = process.env.GOPAY_GOID;
-    const clientId = process.env.GOPAY_CLIENT_ID;
-    const clientSecret = process.env.GOPAY_CLIENT_SECRET;
-    const isProduction = process.env.GOPAY_IS_PRODUCTION === 'true';
+    const goid = process.env.GOPAY_GOID?.trim();
+    const clientId = process.env.GOPAY_CLIENT_ID?.trim();
+    const clientSecret = process.env.GOPAY_CLIENT_SECRET?.trim();
+    const isProduction = process.env.GOPAY_IS_PRODUCTION?.trim() === 'true';
 
-    // Výběr URL dle prostředí (Sandbox pro testy, Live pro ostrý provoz)
+    if (!clientId || !clientSecret || !goid) {
+      throw new Error('Chybí konfigurace GoPay proměnných prostředí na Vercelu.');
+    }
+
+    // Základní URL dle prostředí (Sandbox vs. Ostrý provoz)
     const baseUrl = isProduction 
       ? 'https://gate.gopay.cz/api' 
       : 'https://gw.sandbox.gopay.com/api';
 
-    // 1. Získání OAuth přístupového tokenu
-    const tokenResponse = await fetch(`${baseUrl}/oauth/v2/tokens`, {
+    // 1. Získání OAuth přístupového tokenu (OPRAVENO na /oauth2/token dle manuálu)
+    const tokenResponse = await fetch(`${baseUrl}/oauth2/token`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -33,11 +37,12 @@ export default async function handler(req, res) {
 
     const accessToken = tokenData.access_token;
 
-    // 2. Vytvoření platby (500 Kč = 50000 haléřů)
+    // 2. Založení platby (/payments/payment)
     const orderId = 'SM-' + Date.now();
     const origin = req.headers.origin || 'https://securitymonitor.cz';
 
     const paymentPayload = {
+      goid: parseInt(goid, 10), // GoID musí být číslo dle API v3
       payer: {
         default_payment_instrument: 'PAYMENT_CARD',
         contact: {
@@ -46,7 +51,7 @@ export default async function handler(req, res) {
           phone_number: phone || ''
         }
       },
-      amount: 50000,
+      amount: 50000, // 500 Kč v haléřích
       currency: 'CZK',
       order_number: orderId,
       order_description: 'Security Monitor - Základní analýza',
