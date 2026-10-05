@@ -470,9 +470,9 @@
 
             <p class="text-sm text-slate-500 mb-4">Nyní prosím dokončete simulaci platby pro zobrazení reportu.</p>
 
-            <button onclick="payWithGoPay()" class="bg-green-600 text-white px-10 py-4 rounded-xl font-bold shadow-lg hover:bg-green-700 transition">
+         <button id="gopay-pay-btn" onclick="payWithGoPay()" class="bg-green-600 text-white px-10 py-4 rounded-xl font-bold shadow-lg hover:bg-green-700 transition">
     ZAPLATIT PLATEBNÍ BRÁNOU (500 Kč)
-           </button>
+</button>
 
         </div>
 
@@ -2520,98 +2520,59 @@ function formatBySemicolon(text) {
     return html;
 }
 
-export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+async function payWithGoPay() {
+    const payBtn = document.getElementById('gopay-pay-btn');
+    
+    // Načtení údajů z formuláře (pokud existují)
+    const nameInput = document.querySelector('input[name="name"]');
+    const emailInput = document.querySelector('input[name="email"]');
+    const phoneInput = document.querySelector('input[name="phone"]');
+    const companyInput = document.querySelector('input[name="company"]');
 
-  try {
-    const { name, email, phone, company } = req.body;
-
-    // Přidáno .trim() pro odstranění případných nechtěných mezer
-    const goid = process.env.GOPAY_GOID?.trim();
-    const clientId = process.env.GOPAY_CLIENT_ID?.trim();
-    const clientSecret = process.env.GOPAY_CLIENT_SECRET?.trim();
-    const isProduction = process.env.GOPAY_IS_PRODUCTION?.trim() === 'true';
-
-    // Kontrola, zda jsou klíče vyplněné
-    if (!clientId || !clientSecret || !goid) {
-      throw new Error('Chybí konfigurace GoPay proměnných prostředí na Vercelu.');
-    }
-
-    // Výběr URL dle prostředí
-    const baseUrl = isProduction 
-      ? 'https://gate.gopay.cz/api' 
-      : 'https://gw.sandbox.gopay.com/api';
-
-    // 1. Získání OAuth přístupového tokenu
-    const tokenResponse = await fetch(`${baseUrl}/oauth/v2/tokens`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Authorization': 'Basic ' + Buffer.from(`${clientId}:${clientSecret}`).toString('base64')
-      },
-      body: 'grant_type=client_credentials&scope=payment-all'
-    });
-
-    const tokenData = await tokenResponse.json();
-    if (!tokenResponse.ok || !tokenData.access_token) {
-      throw new Error('Chyba při komunikaci s GoPay (token): ' + JSON.stringify(tokenData));
-    }
-
-    const accessToken = tokenData.access_token;
-
-    // 2. Vytvoření platby (500 Kč = 50000 haléřů)
-    const orderId = 'SM-' + Date.now();
-    const origin = req.headers.origin || 'https://securitymonitor.cz';
-
-    const paymentPayload = {
-      payer: {
-        default_payment_instrument: 'PAYMENT_CARD',
-        contact: {
-          email: email || 'zakaznik@securitymonitor.cz',
-          first_name: name || 'Zákazník',
-          phone_number: phone || ''
-        }
-      },
-      amount: 50000,
-      currency: 'CZK',
-      order_number: orderId,
-      order_description: 'Security Monitor - Základní analýza',
-      items: [
-        {
-          name: 'Základní analýza (Security Monitor)',
-          amount: 50000,
-          count: 1,
-          type: 'ITEM'
-        }
-      ],
-      callback: {
-        return_url: `${origin}/?payment=success&order=${orderId}`
-      }
+    const paymentData = {
+        name: nameInput ? nameInput.value : '',
+        email: emailInput ? emailInput.value : '',
+        phone: phoneInput ? phoneInput.value : '',
+        company: companyInput ? companyInput.value : ''
     };
 
-    const paymentResponse = await fetch(`${baseUrl}/payments/payment`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`
-      },
-      body: JSON.stringify(paymentPayload)
-    });
-
-    const paymentData = await paymentResponse.json();
-
-    if (!paymentResponse.ok || !paymentData.gw_url) {
-      throw new Error('Chyba při zakládání platby v GoPay: ' + JSON.stringify(paymentData));
+    if (emailInput && !emailInput.value) {
+        alert('Prosím vyplňte svůj e-mail pro pokračování k platbě.');
+        emailInput.focus();
+        return;
     }
 
-    return res.status(200).json({ gw_url: paymentData.gw_url });
+    try {
+        if (payBtn) {
+            payBtn.innerText = 'Přesměřuji na platební bránu...';
+            payBtn.disabled = true;
+        }
 
-  } catch (error) {
-    console.error('GoPay Error:', error);
-    return res.status(500).json({ error: error.message });
-  }
+        const response = await fetch('/api/create-payment', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(paymentData)
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.gw_url) {
+            // Úspěch – přesměrování na GoPay
+            window.location.href = data.gw_url;
+        } else {
+            throw new Error(data.error || 'Neznámá chyba serveru');
+        }
+    } catch (err) {
+        console.error('GoPay error:', err);
+        alert('Chyba při vytváření platby: ' + err.message);
+        
+        if (payBtn) {
+            payBtn.innerText = 'ZAPLATIT PLATEBNÍ BRÁNOU (500 Kč)';
+            payBtn.disabled = false;
+        }
+    }
 }
 	
     </script>
