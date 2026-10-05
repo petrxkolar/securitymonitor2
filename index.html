@@ -2521,9 +2521,7 @@ function formatBySemicolon(text) {
 }
 
 async function payWithGoPay() {
-    const payBtn = document.getElementById('gopay-pay-btn');
-    
-    // Načtení údajů z formuláře (pokud existují)
+    // Pokusíme se načíst údaje z formuláře, pokud uživatel vyplnil kontakty
     const nameInput = document.querySelector('input[name="name"]');
     const emailInput = document.querySelector('input[name="email"]');
     const phoneInput = document.querySelector('input[name="phone"]');
@@ -2536,6 +2534,7 @@ async function payWithGoPay() {
         company: companyInput ? companyInput.value : ''
     };
 
+    // Základní validace e-mailu
     if (emailInput && !emailInput.value) {
         alert('Prosím vyplňte svůj e-mail pro pokračování k platbě.');
         emailInput.focus();
@@ -2543,10 +2542,9 @@ async function payWithGoPay() {
     }
 
     try {
-        if (payBtn) {
-            payBtn.innerText = 'Přesměřuji na platební bránu...';
-            payBtn.disabled = true;
-        }
+        // Indikace načítání
+        event.target.innerText = 'Přesměřuji na platební bránu...';
+        event.target.disabled = true;
 
         const response = await fetch('/api/create-payment', {
             method: 'POST',
@@ -2558,23 +2556,21 @@ async function payWithGoPay() {
 
         const data = await response.json();
 
-        if (response.ok && data.gw_url) {
-            // Úspěch – přesměrování na GoPay
+        if (data.gw_url) {
+            // Přesměrování na reálnou GoPay bránu
             window.location.href = data.gw_url;
         } else {
-            throw new Error(data.error || 'Neznámá chyba serveru');
+            alert('Chyba při vytváření platby: ' + (data.error || 'Neznámá chyba'));
+            event.target.innerText = 'ZAPLATIT PLATEBNÍ BRÁNOU (500 Kč)';
+            event.target.disabled = false;
         }
     } catch (err) {
-        console.error('GoPay error:', err);
-        alert('Chyba při vytváření platby: ' + err.message);
-        
-        if (payBtn) {
-            payBtn.innerText = 'ZAPLATIT PLATEBNÍ BRÁNOU (500 Kč)';
-            payBtn.disabled = false;
-        }
+        console.error(err);
+        alert('Nepodařilo se připojit k platební bráně.');
+        event.target.innerText = 'ZAPLATIT PLATEBNÍ BRÁNOU (500 Kč)';
+        event.target.disabled = false;
     }
 }
-	
     </script>
 
 	<div class="text-center mt-12 mb-8">
