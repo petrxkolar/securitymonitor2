@@ -2519,6 +2519,60 @@ function formatBySemicolon(text) {
     html += '</ul>';
     return html;
 }
+
+async function payWithGoPay() {
+    // Pokusíme se načíst údaje z formuláře, pokud uživatel vyplnil kontakty
+    const nameInput = document.querySelector('input[name="name"]');
+    const emailInput = document.querySelector('input[name="email"]');
+    const phoneInput = document.querySelector('input[name="phone"]');
+    const companyInput = document.querySelector('input[name="company"]');
+
+    const paymentData = {
+        name: nameInput ? nameInput.value : '',
+        email: emailInput ? emailInput.value : '',
+        phone: phoneInput ? phoneInput.value : '',
+        company: companyInput ? companyInput.value : ''
+    };
+
+    // Základní validace e-mailu
+    if (emailInput && !emailInput.value) {
+        alert('Prosím vyplňte svůj e-mail pro pokračování k platbě.');
+        emailInput.focus();
+        return;
+    }
+
+    try {
+        // Indikace načítání
+        event.target.innerText = 'Přesměřuji na platební bránu...';
+        event.target.disabled = true;
+
+        const response = await fetch('/api/create-payment', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(paymentData)
+        });
+
+        const data = await response.json();
+
+        if (data.gw_url) {
+            // Přesměrování na reálnou GoPay bránu
+            window.location.href = data.gw_url;
+        } else {
+            alert('Chyba při vytváření platby: ' + (data.error || 'Neznámá chyba'));
+            event.target.innerText = 'ZAPLATIT PLATEBNÍ BRÁNOU (500 Kč)';
+            event.target.disabled = false;
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Nepodařilo se připojit k platební bráně.');
+        event.target.innerText = 'ZAPLATIT PLATEBNÍ BRÁNOU (500 Kč)';
+        event.target.disabled = false;
+    }
+}
+
+	
     </script>
 
 	<div class="text-center mt-12 mb-8">
