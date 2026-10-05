@@ -15,34 +15,44 @@ export default async function handler(req, res) {
       throw new Error('Chybí konfigurace GoPay proměnných prostředí na Vercelu.');
     }
 
-    // Základní URL dle prostředí (Sandbox vs. Ostrý provoz)
     const baseUrl = isProduction 
       ? 'https://gate.gopay.cz/api' 
       : 'https://gw.sandbox.gopay.com/api';
 
-    // 1. Získání OAuth přístupového tokenu (OPRAVENO na /oauth2/token dle manuálu)
+    // Autentizační hlavička (Base64 z ClientID:ClientSecret)
+    const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+
+    // Správné sestavení formulářových dat pomocí URLSearchParams
+    const tokenParams = new URLSearchParams();
+    tokenParams.append('grant_type', 'client_credentials');
+    tokenParams.append('scope', 'payment-all'); // Pokud by to hlásilo chybu, lze zkusit 'payment-create'
+
+    // 1. Získání OAuth přístupového tokenu
     const tokenResponse = await fetch(`${baseUrl}/oauth2/token`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
-        'Authorization': 'Basic ' + Buffer.from(`${clientId}:${clientSecret}`).toString('base64')
+        'Authorization': `Basic ${credentials}`,
+        'Accept': 'application/json'
       },
-      body: 'grant_type=client_credentials&scope=payment-all'
+      body: tokenParams.toString()
     });
 
     const tokenData = await tokenResponse.json();
+    
     if (!tokenResponse.ok || !tokenData.access_token) {
-      throw new Error('Chyba při komunikaci s GoPay (token): ' + JSON.stringify(tokenData));
+      console.error('GoPay Token Error:', tokenData);
+      throw new Error(`Chyba při komunikaci s GoPay (token - HTTP ${tokenResponse.status}): ` + JSON.stringify(tokenData));
     }
 
     const accessToken = tokenData.access_token;
 
-    // 2. Založení platby (/payments/payment)
+    // 2. Založení platby (500 Kč = 50000 haléřů)
     const orderId = 'SM-' + Date.now();
     const origin = req.headers.origin || 'https://securitymonitor.cz';
 
     const paymentPayload = {
-      goid: parseInt(goid, 10), // GoID musí být číslo dle API v3
+      goid: parseInt(goid, 10),
       payer: {
         default_payment_instrument: 'PAYMENT_CARD',
         contact: {
@@ -51,7 +61,7 @@ export default async function handler(req, res) {
           phone_number: phone || ''
         }
       },
-      amount: 50000, // 500 Kč v haléřích
+      amount: 50000,
       currency: 'CZK',
       order_number: orderId,
       order_description: 'Security Monitor - Základní analýza',
@@ -72,7 +82,8 @@ export default async function handler(req, res) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`
+        'Authorization': `Bearer ${accessToken}`,
+        'Accept': 'application/json'
       },
       body: JSON.stringify(paymentPayload)
     });
@@ -83,11 +94,10 @@ export default async function handler(req, res) {
       throw new Error('Chyba při zakládání platby v GoPay: ' + JSON.stringify(paymentData));
     }
 
-    // Vrátíme URL platební brány klientovi
     return res.status(200).json({ gw_url: paymentData.gw_url });
 
   } catch (error) {
-    console.error('GoPay Error:', error);
+    console.error('GoPay Server Error:', error);
     return res.status(500).json({ error: error.message });
   }
 }
