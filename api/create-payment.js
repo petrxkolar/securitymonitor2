@@ -52,7 +52,7 @@ export default async function handler(req, res) {
     const origin = req.headers.origin || 'https://securitymonitor.cz';
 
     const paymentPayload = {
-      goid: parseInt(goid, 10),
+      goid: goid,
       payer: {
         default_payment_instrument: 'PAYMENT_CARD',
         contact: {
@@ -98,6 +98,7 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('GoPay Server Error:', error);
+    console.log('DEBUG Odesílané GoID:', JSON.stringify(goid), 'Typ:', typeof goid);
     return res.status(500).json({ error: error.message });
   }
 }
