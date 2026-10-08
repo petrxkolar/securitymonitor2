@@ -54,20 +54,19 @@ export default async function handler(req, res) {
     const orderId = 'SM-' + Date.now();
     const origin = req.headers.origin || 'https://securitymonitor.cz';
 
-    // Rozdělení jména na křestní jméno a příjmení (GoPay obojí vyžaduje)
     const nameParts = (name || 'Zákazník Zákazník').trim().split(' ');
     const firstName = nameParts[0] || 'Zákazník';
     const lastName = nameParts.slice(1).join(' ') || 'Zákazník';
 
     const paymentPayload = {
-      target_goid: parseInt(goid, 10), // GoPay API v3 vyžaduje target_goid jako číslo (integer)
+      target_goid: parseInt(goid, 10),
       payer: {
         default_payment_instrument: 'PAYMENT_CARD',
         contact: {
           email: email || 'zakaznik@securitymonitor.cz',
           first_name: firstName,
           last_name: lastName,
-          ...(phone?.trim() ? { phone_number: phone.trim() } : {}) // Telefon přidáme pouze, pokud je vyplněný
+          ...(phone?.trim() ? { phone_number: phone.trim() } : {})
         }
       },
       amount: 50000,
@@ -86,6 +85,13 @@ export default async function handler(req, res) {
         return_url: `${origin}/?payment=success&order=${orderId}`
       }
     };
+
+    // --- DETAILNÍ DEBUG VÝPIS PRO KONTROLU A PODPORU ---
+    console.log('=== GOPAY REQUEST DEBUG ===');
+    console.log('URL:', `${baseUrl}/payments/payment`);
+    console.log('Authorization: Bearer', accessToken.substring(0, 10) + '...');
+    console.log('Payload JSON:', JSON.stringify(paymentPayload, null, 2));
+    console.log('===========================');
 
     const paymentResponse = await fetch(`${baseUrl}/payments/payment`, {
       method: 'POST',
@@ -106,7 +112,7 @@ export default async function handler(req, res) {
     }
 
     if (!paymentResponse.ok || !paymentData.gw_url) {
-      throw new Error('Chyba při zakládání platby v GoPay: ' + JSON.stringify(paymentData));
+      throw new URL(`Chyba při zakládání platby v GoPay: ${JSON.stringify(paymentData)}`);
     }
 
     return res.status(200).json({ gw_url: paymentData.gw_url });
