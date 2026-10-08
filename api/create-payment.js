@@ -86,13 +86,6 @@ export default async function handler(req, res) {
       }
     };
 
-    // --- DETAILNÍ DEBUG VÝPIS PRO KONTROLU A PODPORU ---
-    console.log('=== GOPAY REQUEST DEBUG ===');
-    console.log('URL:', `${baseUrl}/payments/payment`);
-    console.log('Authorization: Bearer', accessToken.substring(0, 10) + '...');
-    console.log('Payload JSON:', JSON.stringify(paymentPayload, null, 2));
-    console.log('===========================');
-
     const paymentResponse = await fetch(`${baseUrl}/payments/payment`, {
       method: 'POST',
       headers: {
@@ -112,7 +105,8 @@ export default async function handler(req, res) {
     }
 
     if (!paymentResponse.ok || !paymentData.gw_url) {
-      throw new URL(`Chyba při zakládání platby v GoPay: ${JSON.stringify(paymentData)}`);
+      // OPRAVENO: Použito new Error místo new URL
+      throw new Error(`Chyba při zakládání platby v GoPay: ${JSON.stringify(paymentData)}`);
     }
 
     return res.status(200).json({ gw_url: paymentData.gw_url });
