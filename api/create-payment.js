@@ -3,6 +3,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  let paymentPayload = null; // Definujeme proměnnou nahoře, abychom ji měli k dispozici v catch bloku
+
   try {
     const { name, email, phone, company } = req.body;
 
@@ -58,7 +60,7 @@ export default async function handler(req, res) {
     const firstName = nameParts[0] || 'Zákazník';
     const lastName = nameParts.slice(1).join(' ') || 'Zákazník';
 
-    const paymentPayload = {
+    paymentPayload = {
       target_goid: parseInt(goid, 10),
       payer: {
         default_payment_instrument: 'PAYMENT_CARD',
@@ -105,8 +107,8 @@ export default async function handler(req, res) {
     }
 
     if (!paymentResponse.ok || !paymentData.gw_url) {
-      // OPRAVENO: Použito new Error místo new URL
-      throw new Error(`Chyba při zakládání platby v GoPay: ${JSON.stringify(paymentData)}`);
+      // Zde do chybové zprávy rovnou složíme odeslaný payload i odpověď od GoPay
+      throw new Error(`Odeslano: ${JSON.stringify(paymentPayload)} || Odpoved GoPay: ${JSON.stringify(paymentData)}`);
     }
 
     return res.status(200).json({ gw_url: paymentData.gw_url });
