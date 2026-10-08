@@ -59,7 +59,7 @@ export default async function handler(req, res) {
     const lastName = nameParts.slice(1).join(' ') || 'Zákazník';
 
     const paymentPayload = {
-      goid: parseInt(goid, 10), // Změněno zpět na goid jako číslo (integer) pro standardní e-shop
+      target_goid: parseInt(goid, 10), // GoPay API v3 standardně vyžaduje target_goid jako integer
       payer: {
         default_payment_instrument: 'PAYMENT_CARD',
         contact: {
@@ -85,6 +85,13 @@ export default async function handler(req, res) {
         return_url: `${origin}/?payment=success&order=${orderId}`
       }
     };
+
+    // Výpis do logů Vercelu, abyste viděli přesně odesílaná data
+    console.log('--- GOPAY DEBUG ---');
+    console.log('Environment:', isProduction ? 'PRODUCTION' : 'SANDBOX');
+    console.log('Target URL:', `${baseUrl}/payments/payment`);
+    console.log('Payload:', JSON.stringify(paymentPayload, null, 2));
+    console.log('-------------------');
 
     const paymentResponse = await fetch(`${baseUrl}/payments/payment`, {
       method: 'POST',
