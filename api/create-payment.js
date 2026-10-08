@@ -55,7 +55,7 @@ export default async function handler(req, res) {
     const origin = req.headers.origin || 'https://securitymonitor.cz';
 
     const paymentPayload = {
-      goid: goid,
+      target_goid: parseInt(goid, 10), // Opraveno: GoPay API v3 vyžaduje target_goid jako číslo (integer)
       payer: {
         default_payment_instrument: 'PAYMENT_CARD',
         contact: {
