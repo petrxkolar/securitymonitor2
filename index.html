@@ -1925,16 +1925,21 @@ async function evaluateSmall() {
         const nameInput = document.querySelector('input[placeholder*="jméno"]');
         const userName = nameInput ? nameInput.value : "Uživatel";
         const element = document.getElementById('pdf-source-data');
-		const emailInput = document.querySelector('input[type="email"]'); 
+        const emailInput = document.querySelector('input[type="email"]'); 
         const userEmail = emailInput ? emailInput.value : null;
 
-      if (!userEmail) {
-        alert("Prosím, zadejte platný e-mail před odesláním reportu.");
-        return;
-    }
+        if (!userEmail) {
+            alert("Prosím, zadejte platný e-mail před odesláním reportu.");
+            return;
+        }
+
+        // Ochrana proti dvojímu odeslání e-mailu
+        if (localStorage.getItem('sm_report_sent') === 'true') {
+            console.log("ℹ️ E-mail s reportem již byl v této relaci odeslán, odesílání je zablokováno.");
+            return;
+        }
 
         // Sestavíme kompletní a trvalý HTML dokument s Tailwindem pro staženou přílohu
-        // Escapujeme ukončovací značku script (<\/script>), aby HTML parser neukončil předčasně celý skript
         const fullHtmlDocument = `<!DOCTYPE html>
 <html lang="cs">
 <head>
@@ -1960,14 +1965,16 @@ async function evaluateSmall() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 name: userName,
-				email: userEmail,
+                email: userEmail,
                 reportHtml: `<h1>Security Report</h1><p>Dobrý den, v příloze zasíláme kompletní výsledky analýzy ve formátu HTML.</p>`,
-                htmlFileData: base64Html // Klíčový parametr odpovídající backendu
+                htmlFileData: base64Html
             })
         });
 
         if (response.ok) {
             console.log("%c✅ ÚSPĚCH: Report v HTML příloze byl odeslán.", "color: green; font-weight: bold;");
+            // Označíme, že e-mail byl úspěšně odeslán, aby nedošlo k duplicitě
+            localStorage.setItem('sm_report_sent', 'true');
         } else {
             const errorText = await response.text();
             console.error("❌ API vrátilo chybu při odesílání:", errorText);
