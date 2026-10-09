@@ -2612,10 +2612,17 @@ window.onload = () => {
             });
         }
 
-        // Obnovení kontaktních údajů
+ 		// Obnovení kontaktních údajů
         const savedContact = localStorage.getItem('sm_contact');
+        let customerData = { name: '', email: '', phone: '', company: '' };
         if (savedContact) {
             const contact = JSON.parse(savedContact);
+            customerData = {
+                name: contact.name || '',
+                email: contact.email || '',
+                phone: contact.phone || '',
+                company: contact.company || ''
+            };
             const nameInput = document.querySelector('input[name="name"]');
             const emailInput = document.querySelector('input[name="email"]');
             const phoneInput = document.querySelector('input[name="phone"]');
@@ -2625,6 +2632,24 @@ window.onload = () => {
             if (phoneInput) phoneInput.value = contact.phone || '';
             if (companyInput) companyInput.value = contact.company || '';
         }
+
+        // --- AUTOMATICKÉ ODESLÁNÍ OBJEDNÁVKY NA BACKEND ---
+        if (customerData.email) {
+            const orderNumber = generateOrderNumber(customerData.email);
+            fetch('/api/send-order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orderNumber, customer: customerData })
+            }).then(res => res.json()).then(data => {
+                console.log("Objednávka odeslána:", data);
+            }).catch(err => {
+                console.error("Chyba při odesílání objednávkového e-mailu:", err);
+            });
+        }
+        // ------------------------------------------------
+
+        // Přepnutí na pohled malé analýzy a automatické spuštění vyhodnocení
+        showView('small');
 
         // Přepnutí na pohled malé analýzy a automatické spuštění vyhodnocení
         showView('small');
