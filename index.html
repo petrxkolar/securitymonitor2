@@ -2267,7 +2267,11 @@ function exportToPDF() {
 
             window.scrollTo(0,0);
 
-        }
+        // 💡 TADY: Pokud uživatel vstoupí do základní analýzy, vymažeme starý zámek odeslání
+    if (viewId === 'small') {
+        localStorage.removeItem('sm_report_sent');
+    }
+}
 
 
 
@@ -2528,6 +2532,7 @@ function formatBySemicolon(text) {
 }
 
 async function payWithGoPay() {
+	localStorage.removeItem('sm_report_sent');
     const nameInput = document.querySelector('input[name="name"]');
     const emailInput = document.querySelector('input[name="email"]');
     const phoneInput = document.querySelector('input[name="phone"]');
