@@ -2521,11 +2521,26 @@ function formatBySemicolon(text) {
 }
 
 async function payWithGoPay() {
-    // Pokusíme se načíst údaje z formuláře, pokud uživatel vyplnil kontakty
     const nameInput = document.querySelector('input[name="name"]');
     const emailInput = document.querySelector('input[name="email"]');
     const phoneInput = document.querySelector('input[name="phone"]');
     const companyInput = document.querySelector('input[name="company"]');
+
+    // 1. Uložení odpovědí z dotazníku a kontaktů do localStorage před odchodem na bránu
+    const answers = {};
+    smallQuestions.forEach(q => {
+        const sel = document.getElementById(`sq${q.id}`);
+        if (sel && sel.value) {
+            answers[q.id] = sel.value;
+        }
+    });
+    localStorage.setItem('sm_answers', JSON.stringify(answers));
+    localStorage.setItem('sm_contact', JSON.stringify({
+        name: nameInput ? nameInput.value : '',
+        email: emailInput ? emailInput.value : '',
+        phone: phoneInput ? phoneInput.value : '',
+        company: companyInput ? companyInput.value : ''
+    }));
 
     const paymentData = {
         name: nameInput ? nameInput.value : '',
@@ -2534,7 +2549,6 @@ async function payWithGoPay() {
         company: companyInput ? companyInput.value : ''
     };
 
-    // Základní validace e-mailu
     if (emailInput && !emailInput.value) {
         alert('Prosím vyplňte svůj e-mail pro pokračování k platbě.');
         emailInput.focus();
@@ -2542,7 +2556,6 @@ async function payWithGoPay() {
     }
 
     try {
-        // Indikace načítání
         event.target.innerText = 'Přesměřuji na platební bránu...';
         event.target.disabled = true;
 
@@ -2557,7 +2570,6 @@ async function payWithGoPay() {
         const data = await response.json();
 
         if (data.gw_url) {
-            // Přesměrování na reálnou GoPay bránu
             window.location.href = data.gw_url;
         } else {
             alert('Chyba při vytváření platby: ' + (data.error || 'Neznámá chyba'));
@@ -2571,6 +2583,60 @@ async function payWithGoPay() {
         event.target.disabled = false;
     }
 }
+
+window.onload = () => { 
+    renderSmall(); 
+    renderAudit(); 
+    renderInfra(); 
+    initPayPal(); 
+
+    // 2. Zpracování návratu z platební brány GoPay
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('payment') === 'success') {
+        // Obnovení odpovědí uživatele
+        const savedAnswers = localStorage.getItem('sm_answers');
+        if (savedAnswers) {
+            const answers = JSON.parse(savedAnswers);
+            smallQuestions.forEach(q => {
+                if (answers[q.id]) {
+                    const sel = document.getElementById(`sq${q.id}`);
+                    if (sel) sel.value = answers[q.id];
+                }
+            });
+        }
+
+        // Obnovení kontaktních údajů
+        const savedContact = localStorage.getItem('sm_contact');
+        if (savedContact) {
+            const contact = JSON.parse(savedContact);
+            const nameInput = document.querySelector('input[name="name"]');
+            const emailInput = document.querySelector('input[name="email"]');
+            const phoneInput = document.querySelector('input[name="phone"]');
+            const companyInput = document.querySelector('input[name="company"]');
+            if (nameInput) nameInput.value = contact.name || '';
+            if (emailInput) emailInput.value = contact.email || '';
+            if (phoneInput) phoneInput.value = contact.phone || '';
+            if (companyInput) companyInput.value = contact.company || '';
+        }
+
+        // Přepnutí na pohled malé analýzy a automatické spuštění vyhodnocení
+        showView('small');
+        
+        const unlockContainer = document.getElementById('unlock-container-small');
+        if (unlockContainer) unlockContainer.classList.add('hidden');
+        
+        const evalBtn = document.getElementById('btn-evaluate-small');
+        if (evalBtn) {
+            evalBtn.removeAttribute('disabled');
+            evalBtn.classList.remove('locked-item');
+        }
+
+        evaluateSmall();
+
+        // Vyčištění URL od parametrů platby
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+};
     </script>
 
 	<div class="text-center mt-12 mb-8">
