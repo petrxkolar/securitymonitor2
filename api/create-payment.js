@@ -63,6 +63,7 @@ export default async function handler(req, res) {
         type: 'ACCOUNT',
         goid: parseInt(goid, 10) // Správná struktura pro GoPay API v3
       },
+      lang: 'cs', // <--- TENTO ŘÁDEK ZAJISTÍ ČEŠTINU
       payer: {
         default_payment_instrument: 'PAYMENT_CARD',
         contact: {
