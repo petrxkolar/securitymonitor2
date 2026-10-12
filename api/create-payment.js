@@ -85,7 +85,7 @@ export default async function handler(req, res) {
         }
       ],
       callback: {
-        return_url: `${origin}/?payment=success&order=${orderId}`
+              return_url: `${origin}/?order=${orderId}`
       }
     };
 
