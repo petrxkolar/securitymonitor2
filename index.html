@@ -2596,84 +2596,104 @@ async function payWithGoPay() {
     }
 }
 
-window.onload = () => { 
+window.onload = async () => { 
     renderSmall(); 
     renderAudit(); 
     renderInfra(); 
     initPayPal(); 
 
-    // 2. Zpracování návratu z platební brány GoPay
+    // Zpracování návratu z platební brány GoPay (hledáme GoPay parametr 'id')
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('payment') === 'success') {
-        // Obnovení odpovědí uživatele
-        const savedAnswers = localStorage.getItem('sm_answers');
-        if (savedAnswers) {
-            const answers = JSON.parse(savedAnswers);
-            smallQuestions.forEach(q => {
-                if (answers[q.id]) {
-                    const sel = document.getElementById(`sq${q.id}`);
-                    if (sel) sel.value = answers[q.id];
-                }
-            });
+    const gopayPaymentId = urlParams.get('id');
+
+    if (gopayPaymentId) {
+        // Zobrazíme sekci a informaci o ověřování
+        showView('small');
+        const resDiv = document.getElementById('small-result');
+        if (resDiv) {
+            resDiv.classList.remove('hidden');
+            resDiv.innerHTML = `<div class="p-8 text-center bg-white rounded-2xl shadow"><div class="animate-spin text-4xl mb-4">⏳</div><h3 class="text-lg font-bold">Ověřuji stav platby u GoPay...</h3></div>`;
         }
 
- 		// Obnovení kontaktních údajů
-        const savedContact = localStorage.getItem('sm_contact');
-        let customerData = { name: '', email: '', phone: '', company: '' };
-        if (savedContact) {
-            const contact = JSON.parse(savedContact);
-            customerData = {
-                name: contact.name || '',
-                email: contact.email || '',
-                phone: contact.phone || '',
-                company: contact.company || ''
-            };
-            const nameInput = document.querySelector('input[name="name"]');
-            const emailInput = document.querySelector('input[name="email"]');
-            const phoneInput = document.querySelector('input[name="phone"]');
-            const companyInput = document.querySelector('input[name="company"]');
-            if (nameInput) nameInput.value = contact.name || '';
-            if (emailInput) emailInput.value = contact.email || '';
-            if (phoneInput) phoneInput.value = contact.phone || '';
-            if (companyInput) companyInput.value = contact.company || '';
-        }
-
-        // --- AUTOMATICKÉ ODESLÁNÍ OBJEDNÁVKY NA BACKEND ---
-        if (customerData.email) {
-            const orderNumber = generateOrderNumber(customerData.email);
-            fetch('/api/send-order', {
+        try {
+            // Zavoláme náš backend pro ověření reálného stavu platby
+            const response = await fetch('/api/check-payment', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ orderNumber, customer: customerData })
-            }).then(res => res.json()).then(data => {
-                console.log("Objednávka odeslána:", data);
-            }).catch(err => {
-                console.error("Chyba při odesílání objednávkového e-mailu:", err);
+                body: JSON.stringify({ paymentId: gopayPaymentId })
             });
+
+            const data = await response.json();
+
+            // Zkontrolujeme, zda je stav skutečně PAID (Zaplaceno)
+            if (response.ok && data.state === 'PAID') {
+                localStorage.removeItem('sm_report_sent');
+
+                // Obnovení odpovědí uživatele
+                const savedAnswers = localStorage.getItem('sm_answers');
+                if (savedAnswers) {
+                    const answers = JSON.parse(savedAnswers);
+                    smallQuestions.forEach(q => {
+                        if (answers[q.id]) {
+                            const sel = document.getElementById(`sq${q.id}`);
+                            if (sel) sel.value = answers[q.id];
+                        }
+                    });
+                }
+
+                // Obnovení kontaktních údajů
+                const savedContact = localStorage.getItem('sm_contact');
+                let customerData = { name: '', email: '', phone: '', company: '' };
+                if (savedContact) {
+                    const contact = JSON.parse(savedContact);
+                    customerData = contact;
+                    const nameInput = document.querySelector('input[name="name"]');
+                    const emailInput = document.querySelector('input[name="email"]');
+                    const phoneInput = document.querySelector('input[name="phone"]');
+                    const companyInput = document.querySelector('input[name="company"]');
+                    if (nameInput) nameInput.value = contact.name || '';
+                    if (emailInput) emailInput.value = contact.email || '';
+                    if (phoneInput) phoneInput.value = contact.phone || '';
+                    if (companyInput) companyInput.value = contact.company || '';
+                }
+
+                // Odeslání objednávky na backend
+                if (customerData.email) {
+                    const orderNumber = generateOrderNumber(customerData.email);
+                    fetch('/api/send-order', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ orderNumber, customer: customerData })
+                    }).catch(err => console.error("Chyba při odesílání objednávky:", err));
+                }
+
+                const unlockContainer = document.getElementById('unlock-container-small');
+                if (unlockContainer) unlockContainer.classList.add('hidden');
+                
+                const evalBtn = document.getElementById('btn-evaluate-small');
+                if (evalBtn) {
+                    evalBtn.removeAttribute('disabled');
+                    evalBtn.classList.remove('locked-item');
+                }
+
+                // Spuštění vyhodnocení a zobrazení reportu
+                evaluateSmall();
+            } else {
+                // Platba nebyla úspěšná (CANCELED, TIMEOUTED atd.)
+                alert('Platba nebyla dokončena nebo byla zrušena. Report se nezobrazí.');
+                showView('home');
+            }
+        } catch (err) {
+            console.error("Chyba při ověřování platby:", err);
+            alert('Nepodařilo se ověřit stav platby.');
+            showView('home');
         }
-        // ------------------------------------------------
 
-        // Přepnutí na pohled malé analýzy a automatické spuštění vyhodnocení
-        showView('small');
-
-        // Přepnutí na pohled malé analýzy a automatické spuštění vyhodnocení
-        showView('small');
-        
-        const unlockContainer = document.getElementById('unlock-container-small');
-        if (unlockContainer) unlockContainer.classList.add('hidden');
-        
-        const evalBtn = document.getElementById('btn-evaluate-small');
-        if (evalBtn) {
-            evalBtn.removeAttribute('disabled');
-            evalBtn.classList.remove('locked-item');
-        }
-
-        evaluateSmall();
-
-        // Vyčištění URL od parametrů platby
+        // Vyčištění URL od parametrů GoPay
         window.history.replaceState({}, document.title, window.location.pathname);
     }
 };
+
     </script>
 
 	<div class="text-center mt-12 mb-8">
